@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Sign up · PulseTrack{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md py-12">
+  <h1 class="mb-2 text-3xl font-semibold tracking-tight">Create your account</h1>
+  <p class="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
+    No email needed. Just pick a username you'll remember.
+  </p>
+
+  <form method="post" class="space-y-4">
+    {% csrf_token %}
+
+    {% for field in form %}
+      <div>
+        <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+        {{ field }}
+        {% if field.help_text %}
+          <p class="mt-1 text-xs text-neutral-500">{{ field.help_text }}</p>
+        {% endif %}
+        {% for err in field.errors %}
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ err }}</p>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    {% for err in form.non_field_errors %}
+      <p class="text-sm text-red-600 dark:text-red-400">{{ err }}</p>
+    {% endfor %}
+
+    <button type="submit"
+            class="w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-white
+                   hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
+      Create account
+    </button>
+  </form>
+
+  <p class="mt-6 text-center text-sm text-neutral-500">
+    Already have an account?
+    <a href="{% url 'accounts:login' %}" class="font-medium text-neutral-900 underline dark:text-white">Log in</a>
+  </p>
+</div>
+
+{# quick inline styling so form widgets inherit the theme — later we'll move to a form library #}
+<style>
+  form input, form select {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(212 212 212);
+    padding: 0.55rem 0.75rem;
+    background: white;
+    outline: none;
+  }
+  .dark form input, .dark form select {
+    background: rgb(23 23 23);
+    border-color: rgb(64 64 64);
+    color: white;
+  }
+  form input:focus, form select:focus { border-color: rgb(115 115 115); }
+</style>
+{% endblock %}

@@ -1,0 +1,59 @@
+{# templates/partials/sidebar.html — clean, no duplicates #}
+<aside id="sidebar"
+       class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform
+              border-r border-white/5 transition-transform duration-300
+              md:translate-x-0">
+
+  <div class="flex h-full flex-col ves-glass !rounded-none !border-y-0 !border-l-0">
+
+    {# ---- brand ---- #}
+    <a href="{% url 'dashboard:home' %}" class="flex h-16 items-center gap-2.5 px-5">
+      {# the Vespera stopwatch logo — see Part 3 #}
+      {% include "partials/logo.html" with size=34 %}
+      <span class="ves-wordmark text-lg">Vespera</span>
+    </a>
+
+    {# ---- nav ---- #}
+    <nav class="flex-1 space-y-1 p-3 text-sm">
+      {% with current=request.resolver_match.namespace %}
+
+        <a href="{% url 'dashboard:home' %}"
+           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
+                  {% if current == 'dashboard' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="text-base">🏠</span> Dashboard
+        </a>
+
+        <a href="{% url 'courses:list' %}"
+           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
+                  {% if current == 'courses' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="text-base">📚</span> Courses
+        </a>
+
+        <a href="{% url 'expenses:list' %}"
+           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
+                  {% if current == 'expenses' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="text-base">💸</span> Expenses
+        </a>
+
+        <a href="{% url 'routines:board' %}"
+           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
+                  {% if current == 'routines' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="text-base">⏱️</span> Routine
+        </a>
+
+        <a href="{% url 'accounts:profile' %}"
+           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
+                  {% if current == 'accounts' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="text-base">👤</span> Profile
+        </a>
+
+      {% endwith %}
+    </nav>
+
+    <div class="border-t border-white/5 p-3 text-xs text-[var(--ves-muted)]">
+      v0.4 · Phase&nbsp;4
+    </div>
+  </div>
+</aside>
+
+<div id="sidebar-backdrop" class="fixed inset-0 z-30 hidden bg-black/50 backdrop-blur-sm md:hidden"></div>

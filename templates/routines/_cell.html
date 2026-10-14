@@ -1,0 +1,11 @@
+{# Single toggleable check-in cell — also served as HTMX partial #}
+<button hx-post="{% url 'routines:toggle' habit.id day|date:'Y-m-d' %}"
+        hx-swap="outerHTML"
+        class="mx-auto grid h-9 w-9 place-items-center rounded-xl border transition
+          {% if done %}
+            border-transparent bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-white shadow-lg shadow-violet-500/30
+          {% else %}
+            border-[var(--ves-border)] text-transparent hover:border-[var(--ves-accent)] hover:text-[var(--ves-accent)]
+          {% endif %}">
+  ✓
+</button>

@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Routine · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl">
+
+  <div class="mb-6">
+    <h1 class="text-3xl font-semibold tracking-tight">Routine</h1>
+    <p class="mt-1 text-sm text-[var(--ves-muted)]">Last 7 days. Tap a cell to check in.</p>
+  </div>
+
+  {# ---- add habit ---- #}
+  <form method="post" action="{% url 'routines:create' %}"
+        class="mb-4 flex flex-wrap items-center gap-2 rounded-2xl ves-glass p-4">
+    {% csrf_token %}
+    <select name="emoji"
+            class="rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)]">
+      <option value="📚">📚 Study</option>
+      <option value="🏃">🏃 Exercise</option>
+      <option value="💧">💧 Water</option>
+      <option value="🧘">🧘 Meditate</option>
+      <option value="💻">💻 Code</option>
+      <option value="🛏️">🛏️ Sleep early</option>
+      <option value="📝">📝 Journal</option>
+      <option value="🍎">🍎 Eat well</option>
+    </select>
+    <input type="text" name="name" required maxlength="80" placeholder="New habit — e.g. Read 20 min"
+           class="flex-1 min-w-[180px] rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)]" />
+    <button type="submit"
+            class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
+      Add
+    </button>
+  </form>
+
+  {# ---- weekly grid ---- #}
+  {% if not rows %}
+    <div class="rounded-2xl ves-glass p-10 text-center">
+      <div class="mx-auto mb-3 text-4xl">🌱</div>
+      <h2 class="text-lg font-semibold">No habits yet</h2>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">
+        Add one above. It takes 30 seconds and pays off in 30 days.
+      </p>
+    </div>
+  {% else %}
+    <div class="overflow-x-auto rounded-2xl ves-glass p-4">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-[var(--ves-muted)]">
+            <th class="w-[40%] py-2 text-left font-medium">Habit</th>
+            {% for d in days %}
+              <th class="py-2 text-center font-medium {% if d == today %}text-[var(--ves-accent)]{% endif %}">
+                <div class="text-xs uppercase tracking-wider">{{ d|date:"D" }}</div>
+                <div class="text-[11px]">{{ d|date:"j" }}</div>
+              </th>
+            {% endfor %}
+            <th class="py-2 text-center font-medium">🔥</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--ves-border)]">
+          {% for row in rows %}
+            <tr>
+              <td class="py-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">{{ row.habit.emoji }}</span>
+                  <span class="font-medium">{{ row.habit.name }}</span>
+                  <form method="post" action="{% url 'routines:archive' row.habit.pk %}" class="ml-auto">
+                    {% csrf_token %}
+                    <button class="text-xs text-[var(--ves-muted)] hover:text-red-500">archive</button>
+                  </form>
+                </div>
+              </td>
+              {% for habit_id, day, done in row.cells %}
+                <td class="py-3 text-center">
+                  {% include "routines/_cell.html" with habit=row.habit day=day done=done today=today %}
+                </td>
+              {% endfor %}
+              <td class="py-3 text-center font-semibold">{{ row.streak }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+{% endblock %}

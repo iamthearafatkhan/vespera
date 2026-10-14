@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Profile · PulseTrack{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-3xl">
+  <h1 class="mb-1 text-3xl font-semibold tracking-tight">Profile</h1>
+  <p class="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
+    Signed in as <span class="font-medium">{{ user.username }}</span>
+  </p>
+
+  <section class="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
+    <h2 class="mb-3 text-lg font-semibold">Account details</h2>
+    <dl class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="text-neutral-500">Full name</dt>
+        <dd class="font-medium">{{ user.full_name }}</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">Username</dt>
+        <dd class="font-medium">{{ user.username }}</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">Joined</dt>
+        <dd class="font-medium">{{ user.date_joined|date:"M j, Y" }}</dd>
+      </div>
+      <div>
+        <dt class="text-neutral-500">Last login</dt>
+        <dd class="font-medium">{{ user.last_login|date:"M j, Y H:i" }}</dd>
+      </div>
+    </dl>
+  </section>
+
+  {# recovery codes are tucked away here on purpose — users find them when needed #}
+  <section class="mt-6 rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
+    <h2 class="mb-1 text-lg font-semibold">Recovery codes</h2>
+    <p class="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
+      You have <strong>{{ user.recovery_codes.count }}</strong> codes.
+      Keep them somewhere safe — each works only once.
+    </p>
+    <a href="{% url 'accounts:recovery_codes' %}"
+       class="inline-block rounded-lg border border-neutral-300 px-4 py-2 text-sm
+              hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">
+      View &amp; manage codes
+    </a>
+  </section>
+</div>
+{% endblock %}

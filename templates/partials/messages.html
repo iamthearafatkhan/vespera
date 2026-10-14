@@ -1,0 +1,11 @@
+{# Flash messages from django.contrib.messages #} {% if messages %}
+<div class="mb-4 space-y-2">
+  {% for m in messages %}
+  <div
+    class="rounded-lg border px-4 py-2 text-sm {% if m.tags == 'error' %} border-red-300 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200 {% else %} border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 {% endif %}"
+  >
+    {{ m }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

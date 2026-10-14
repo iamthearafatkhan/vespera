@@ -1,0 +1,44 @@
+{% extends "base.html" %} {% block title %}{{ course.title }} · Vespera{%
+endblock %} {% block content %}
+<div class="mx-auto max-w-4xl">
+  {# breadcrumbs + actions #}
+  <div class="mb-4 flex items-center justify-between gap-4">
+    <a
+      href="{% url 'courses:list' %}"
+      class="text-sm text-[var(--ves-muted)] hover:text-[var(--ves-text)]"
+      >← All courses</a
+    >
+    <div class="flex gap-2">
+      <a
+        href="{% url 'courses:edit' course.pk %}"
+        class="rounded-xl px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
+        >Edit</a
+      >
+      <form
+        method="post"
+        action="{% url 'courses:archive' course.pk %}"
+        onsubmit="return confirm('Archive this course?');"
+      >
+        {% csrf_token %}
+        <button
+          class="rounded-xl px-3 py-1.5 text-sm text-[var(--ves-muted)] hover:bg-black/5 dark:hover:bg-white/5"
+        >
+          Archive
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <h1 class="mb-6 text-3xl font-semibold tracking-tight">{{ course.title }}</h1>
+
+  {# HTMX target — the whole forecast + history area updates in place after
+  logging #}
+  <div id="forecast-and-history" hx-target="this" hx-swap="innerHTML">
+    {% include "courses/_forecast_and_history.html" with course=course
+    forecast=forecast sessions=sessions form=form %}
+  </div>
+</div>
+
+{# HTMX for in-place session logging #}
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+{% endblock %}

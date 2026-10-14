@@ -1,0 +1,16 @@
+<!-- static/img/vespera.svg -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <circle cx="32" cy="4.6" r="2.1" fill="#58a4b0"/>
+  <path d="M26.8 8.4 H37.2 L35.2 13.6 H28.8 Z" fill="#58a4b0"/>
+  <circle cx="32" cy="37" r="22" stroke="#58a4b0" stroke-width="3" fill="none"/>
+  <g stroke="#58a4b0" stroke-width="2.2" stroke-linecap="round" opacity=".5">
+    <line x1="32" y1="16" x2="32" y2="20"/>
+    <line x1="32" y1="54" x2="32" y2="58"/>
+    <line x1="11" y1="37" x2="15" y2="37"/>
+    <line x1="49" y1="37" x2="53" y2="37"/>
+  </g>
+  <path d="M23.5 23 L32 34 L40.5 23 Z" fill="#58a4b0"/>
+  <path d="M22 40.5 L32 50.5 L42 40.5" stroke="#58a4b0" stroke-width="3.2"
+        stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M47 46 Q54.5 41 58 47 Q54.5 54 48 52 Q46 49 47 46 Z" fill="#7cb342"/>
+</svg>

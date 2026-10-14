@@ -1,0 +1,7 @@
+/* static/css/app.css */
+html {
+  -webkit-font-smoothing: antialiased;
+}
+.footlink-logo {
+  border-radius: 4px;
+}

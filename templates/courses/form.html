@@ -1,0 +1,58 @@
+{% extends "base.html" %} {% block title %}{{ mode|title }} course · Vespera{%
+endblock %} {% block content %}
+<div class="mx-auto max-w-lg py-8">
+  <h1 class="mb-1 text-2xl font-semibold tracking-tight">
+    {% if mode == "edit" %}Edit course{% else %}Add a course{% endif %}
+  </h1>
+  <p class="mb-6 text-sm text-[var(--ves-muted)]">
+    Give it a name and its total length. You can log sessions later.
+  </p>
+
+  <form method="post" class="space-y-4 rounded-2xl ves-glass p-6">
+    {% csrf_token %} {% for field in form %}
+    <div>
+      <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+      {{ field }} {% for err in field.errors %}
+      <p class="mt-1 text-xs text-red-500">{{ err }}</p>
+      {% endfor %}
+    </div>
+    {% endfor %} {% for err in form.non_field_errors %}
+    <p class="text-sm text-red-500">{{ err }}</p>
+    {% endfor %}
+
+    <div class="flex gap-3 pt-2">
+      <button
+        type="submit"
+        class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20"
+      >
+        {% if mode == "edit" %}Save changes{% else %}Create course{% endif %}
+      </button>
+      <a
+        href="{% url 'courses:list' %}"
+        class="rounded-xl px-5 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
+        >Cancel</a
+      >
+    </div>
+  </form>
+</div>
+
+<style>
+  form input,
+  form textarea,
+  form select {
+    width: 100%;
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--ves-border);
+    background: color-mix(in oklab, var(--ves-bg) 60%, transparent);
+    color: var(--ves-text);
+    outline: none;
+  }
+  form input:focus,
+  form textarea:focus,
+  form select:focus {
+    border-color: color-mix(in oklab, var(--ves-accent) 60%, transparent);
+    box-shadow: var(--ves-glow);
+  }
+</style>
+{% endblock %}

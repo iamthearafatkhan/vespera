@@ -1,0 +1,52 @@
+{# Partial: monthly total + category breakdown + recent entries #}
+
+{# ---- total card ---- #}
+<section class="rounded-2xl ves-glass p-5 ves-glow-ring">
+  <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">This month</p>
+  <p class="mt-1 text-3xl font-semibold gradient-text">
+    {{ total|floatformat:2 }}
+  </p>
+</section>
+
+{# ---- category breakdown ---- #}
+{% if by_category %}
+<section class="rounded-2xl ves-glass p-5">
+  <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">By category</h3>
+  <div class="space-y-2">
+    {% for row in by_category %}
+      <div class="flex items-center justify-between text-sm">
+        <span>{{ row.category|capfirst }}</span>
+        <span class="font-medium">{{ row.total|floatformat:2 }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---- recent entries ---- #}
+<section class="rounded-2xl ves-glass p-5">
+  <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Recent</h3>
+
+  {% if not recent %}
+    <p class="text-sm text-[var(--ves-muted)]">No expenses yet this month. Add one on the left.</p>
+  {% else %}
+    <ul class="divide-y divide-[var(--ves-border)] text-sm">
+      {% for e in recent %}
+        <li class="flex items-center justify-between py-2.5">
+          <div class="min-w-0">
+            <p class="font-medium">{{ e.get_category_display }}</p>
+            {% if e.description %}<p class="truncate text-xs text-[var(--ves-muted)]">{{ e.description }}</p>{% endif %}
+          </div>
+          <div class="ml-3 flex items-center gap-3">
+            <span class="font-semibold">{{ e.amount|floatformat:2 }}</span>
+            <button hx-post="{% url 'expenses:delete' e.pk %}"
+                    hx-target="#recent-block"
+                    hx-swap="innerHTML"
+                    hx-confirm="Delete this expense?"
+                    class="text-[var(--ves-muted)] hover:text-red-500">×</button>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>

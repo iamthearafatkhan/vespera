@@ -1,0 +1,307 @@
+/* static/css/vespera.css — Vespera design system v2
+   Palette:
+     Alabaster Grey  #d8dbe2   — light text / soft surfaces
+     Powder Blue     #a9bcd0   — muted blue / secondary accent
+     Pacific Blue    #58a4b0   — primary accent (glow, progress)
+     Charcoal Blue   #373f51   — dark surfaces / borders
+     Carbon Black    #1b1b1e   — dark background
+*/
+
+/* ---------- Tokens ---------- */
+:root {
+  /* light theme */
+  --ves-bg: #f4f5f8;
+  --ves-surface: rgba(216, 219, 226, 0.55);
+  /* alabaster grey glass */
+  --ves-border: rgba(55, 63, 81, 0.12);
+  /* charcoal blue @ 12% */
+  --ves-text: #1b1b1e;
+  /* carbon black */
+  --ves-muted: #373f51;
+  /* charcoal blue */
+  --ves-accent: #58a4b0;
+  /* pacific blue */
+  --ves-accent-2: #a9bcd0;
+  /* powder blue */
+  --ves-glow: 0 0 0 1px rgba(88, 164, 176, .25),
+    0 8px 40px -12px rgba(88, 164, 176, .45);
+}
+
+.dark {
+  --ves-bg: #1b1b1e;
+  /* carbon black */
+  --ves-surface: rgba(55, 63, 81, 0.35);
+  /* charcoal blue glass */
+  --ves-border: rgba(216, 219, 226, 0.08);
+  /* alabaster @ 8% */
+  --ves-text: #d8dbe2;
+  /* alabaster grey */
+  --ves-muted: #a9bcd0;
+  /* powder blue */
+  --ves-accent: #58a4b0;
+  /* pacific blue */
+  --ves-accent-2: #a9bcd0;
+  /* powder blue */
+  --ves-glow: 0 0 0 1px rgba(88, 164, 176, .4),
+    0 12px 60px -18px rgba(88, 164, 176, .55);
+}
+
+/* ---------- Base ---------- */
+html,
+body {
+  background: var(--ves-bg);
+  color: var(--ves-text);
+}
+
+body {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: -0.005em;
+}
+
+/* Native form controls follow theme */
+:root {
+  color-scheme: light;
+}
+
+.dark,
+.dark * {
+  color-scheme: dark;
+}
+
+select option {
+  background: #ffffff;
+  color: #1b1b1e;
+}
+
+.dark select option {
+  background: #1b1b1e;
+  color: #d8dbe2;
+}
+
+/* ---------- Ambient mesh (pacific → powder gradient) ---------- */
+.ves-mesh {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ves-mesh::before,
+.ves-mesh::after {
+  content: "";
+  position: absolute;
+  width: 60vw;
+  height: 60vw;
+  min-width: 480px;
+  min-height: 480px;
+  border-radius: 50%;
+  filter: blur(140px);
+  opacity: .40;
+  animation: ves-drift 30s ease-in-out infinite alternate;
+}
+
+.ves-mesh::before {
+  background: radial-gradient(circle at 30% 30%, var(--ves-accent), transparent 60%);
+  top: -20%;
+  left: -10%;
+}
+
+.ves-mesh::after {
+  background: radial-gradient(circle at 70% 70%, var(--ves-accent-2), transparent 60%);
+  bottom: -20%;
+  right: -10%;
+  animation-delay: -15s;
+  opacity: .28;
+}
+
+.dark .ves-mesh::before {
+  opacity: .30;
+}
+
+.dark .ves-mesh::after {
+  opacity: .18;
+}
+
+@keyframes ves-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(-4%, 6%, 0) scale(1.04);
+  }
+}
+
+/* ---------- Glass panel ---------- */
+.ves-glass {
+  background: var(--ves-surface);
+  border: 1px solid var(--ves-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-radius: 1rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset;
+}
+
+.ves-glass-hover {
+  transition: box-shadow .35s ease, transform .35s ease, border-color .35s ease;
+}
+
+.ves-glass-hover:hover {
+  box-shadow: var(--ves-glow);
+  border-color: color-mix(in oklab, var(--ves-accent) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+/* ---------- Glow / text ---------- */
+.ves-glow-ring {
+  box-shadow: var(--ves-glow);
+}
+
+.gradient-text,
+.ves-gradient-text {
+  background: linear-gradient(92deg, var(--ves-accent), var(--ves-accent-2));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Pulse ---------- */
+.ves-pulse {
+  position: relative;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ves-accent);
+}
+
+.ves-pulse::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 999px;
+  background: var(--ves-accent);
+  opacity: .55;
+  animation: ves-pulse 2.4s ease-out infinite;
+}
+
+.ves-pulse.amber {
+  background: #f5a623;
+}
+
+.ves-pulse.amber::after {
+  background: #f5a623;
+}
+
+.ves-pulse.red {
+  background: #ef4444;
+}
+
+.ves-pulse.red::after {
+  background: #ef4444;
+}
+
+.ves-pulse.grey {
+  background: var(--ves-muted);
+}
+
+.ves-pulse.grey::after {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes ves-pulse {
+  0% {
+    transform: scale(.7);
+    opacity: .55;
+  }
+
+  70% {
+    transform: scale(2);
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ---------- Progress ---------- */
+.ves-progress {
+  height: 10px;
+  width: 100%;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--ves-text) 8%, transparent);
+}
+
+.ves-progress>span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(92deg, var(--ves-accent), var(--ves-accent-2));
+  box-shadow: 0 0 18px -2px var(--ves-accent);
+  transition: width .8s cubic-bezier(.22, .61, .36, 1);
+}
+
+/* ---------- Sidebar nav ---------- */
+.nav-active {
+  background: color-mix(in oklab, var(--ves-accent) 14%, transparent);
+  color: var(--ves-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ves-accent) 28%, transparent),
+    0 6px 24px -12px var(--ves-accent);
+}
+
+.nav-idle:hover {
+  background: rgba(255, 255, 255, .045);
+}
+
+:root .nav-idle:hover {
+  background: rgba(27, 27, 30, .04);
+}
+
+/* ---------- Logo ---------- */
+.ves-logo {
+  display: block;
+  transition: filter .5s ease;
+}
+
+.ves-logo:hover {
+  filter: drop-shadow(0 0 10px var(--ves-accent));
+}
+
+.ves-logo .ves-tick {
+  opacity: .5;
+}
+
+/* ---------- Wordmark ---------- */
+.ves-wordmark {
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  background: linear-gradient(92deg, var(--ves-text), var(--ves-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Motion-safe guard ---------- */
+@media (prefers-reduced-motion: reduce) {
+
+  .ves-mesh::before,
+  .ves-mesh::after,
+  .ves-pulse::after {
+    animation: none !important;
+  }
+
+  .ves-glass-hover,
+  .ves-logo {
+    transition: none;
+  }
+}

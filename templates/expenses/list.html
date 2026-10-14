@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Expenses · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl">
+
+  <div class="mb-6 flex items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight">Expenses</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">{{ month_label }} · spending snapshot</p>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+
+    {# ---- left: add form ---- #}
+    <section class="lg:col-span-1 rounded-2xl ves-glass p-5">
+      <h2 class="mb-3 text-lg font-semibold">Add expense</h2>
+      <form hx-post="{% url 'expenses:add' %}"
+            hx-target="#recent-block"
+            hx-swap="innerHTML"
+            hx-on::after-request="if(event.detail.successful) this.reset()"
+            class="space-y-3">
+        {% csrf_token %}
+
+        <div>
+          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Amount</label>
+          <input type="number" name="amount" step="0.01" min="0" required
+                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Category</label>
+          <select name="category"
+                  class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]">
+            {% for value, label in form.fields.category.choices %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Description</label>
+          <input type="text" name="description" maxlength="200" placeholder="Optional"
+                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
+        </div>
+
+        <div>
+          <label class="mb-1 block text-xs text-[var(--ves-muted)]">When</label>
+          <input type="datetime-local" name="occurred_at" value="{{ form.occurred_at.value|default:'' }}"
+                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
+        </div>
+
+        <button type="submit"
+                class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
+          Save
+        </button>
+      </form>
+    </section>
+
+    {# ---- right: totals + list (HTMX target) ---- #}
+    <div id="recent-block" class="lg:col-span-2 space-y-4">
+      {% include "expenses/_recent.html" %}
+    </div>
+
+  </div>
+</div>
+
+<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+{% endblock %}

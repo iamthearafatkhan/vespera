@@ -1,0 +1,48 @@
+{# templates/base.html #}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/vespera.svg' %}" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Vespera{% endblock %}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: "class" };</script>
+
+  {# apply saved theme before paint — prevents white flash in dark mode #}
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (!saved && prefersDark)) document.documentElement.classList.add("dark");
+    })();
+  </script>
+
+  <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/vespera.css' %}" />  {# premium layer #}
+</head>
+
+<body class="h-full">
+  {# ambient gradient mesh — sits behind everything #}
+  <div class="ves-mesh" aria-hidden="true"></div>
+
+  {% if user.is_authenticated %}{% include "partials/sidebar.html" %}{% endif %}
+
+  <div class="{% if user.is_authenticated %}md:pl-64{% endif %} flex min-h-full flex-col">
+    {% if user.is_authenticated %}{% include "partials/topbar.html" %}{% endif %}
+
+    <main class="flex-1 px-4 py-6 md:px-8">
+      {% include "partials/messages.html" %}
+      {% block content %}{% endblock %}
+    </main>
+
+    {% if user.is_authenticated %}{% include "partials/footer.html" %}{% endif %}
+  </div>
+
+  <script src="{% static 'js/theme.js' %}"></script>
+  <script src="{% static 'js/sidebar.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>
