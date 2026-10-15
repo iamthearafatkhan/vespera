@@ -25,7 +25,11 @@
 </head>
 
 <body class="h-full">
-  {# ambient gradient mesh — sits behind everything #}
+
+  {# Vanta WebGL particle field — sits furthest back #}
+  <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>
+
+  {# ambient gradient mesh — sits on top of Vanta #}
   <div class="ves-mesh" aria-hidden="true"></div>
 
   {% if user.is_authenticated %}{% include "partials/sidebar.html" %}{% endif %}
@@ -43,6 +47,12 @@
 
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/sidebar.js' %}"></script>
+
+  {# Vanta: THREE must load first, then the effect, then our init #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.dots.min.js"></script>
+  <script src="{% static 'js/vanta-bg.js' %}"></script>
+
   {% block extra_js %}{% endblock %}
 </body>
 </html>

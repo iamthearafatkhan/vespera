@@ -1,0 +1,38 @@
+{# Adaptive Study Load Advisor — HTMX partial #}
+{% if not baseline.predicted_finish %}
+  <p class="text-sm text-[var(--ves-muted)]">
+    Log a few sessions first — the advisor needs a forecast to simulate against.
+  </p>
+{% elif not simulated %}
+  <div class="text-sm text-[var(--ves-muted)]">
+    <p>You finish on <strong class="text-[var(--ves-text)]">{{ baseline.predicted_finish|date:"M j, Y" }}</strong>.</p>
+    <p class="mt-1">Move the slider to see what extra study time would do.</p>
+  </div>
+{% else %}
+  <div class="space-y-3">
+    <div class="flex items-baseline gap-3">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">New finish line</p>
+      {% if delta_days is not None and delta_days < 0 %}
+        <span class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">
+          {{ delta_days }} day{{ delta_days|pluralize }}
+        </span>
+      {% endif %}
+    </div>
+
+    <p class="text-2xl font-semibold gradient-text">
+      {{ simulated.predicted_finish|date:"F j, Y" }}
+    </p>
+
+    <p class="text-xs text-[var(--ves-muted)]">
+      Range: {{ simulated.earliest_finish|date:"M j" }} – {{ simulated.latest_finish|date:"M j" }}
+      (80% confidence). New pace: {{ simulated.rate|floatformat:1 }} min/day.
+    </p>
+
+    {% if delta_days is not None and delta_days < 0 %}
+      <p class="text-xs text-[var(--ves-muted)]">
+        That's <strong class="text-[var(--ves-text)]">{{ delta_days|cut:"-" }} day{{ delta_days|cut:"-"|pluralize }}</strong>
+        earlier than your current pace.
+      </p>
+    {% endif %}
+  </div>
+{% endif %}

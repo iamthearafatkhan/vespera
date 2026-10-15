@@ -38,6 +38,49 @@ endblock %} {% block content %}
     forecast=forecast sessions=sessions form=form %}
   </div>
 </div>
+{# ---- Adaptive Study Load Advisor ---- #}
+<section class="mb-4 rounded-2xl ves-glass p-6">
+  <div class="mb-4 flex items-center justify-between gap-4">
+    <div>
+      <h2 class="text-lg font-semibold">What if?</h2>
+      <p class="mt-1 text-xs text-[var(--ves-muted)]">
+        Simulate extra study time and see how the finish date moves.
+      </p>
+    </div>
+  </div>
+
+  {# controls — stay outside the HTMX target so they don't reset on swap #}
+  <form id="advisor-form"
+        hx-get="{% url 'courses:advisor' course.pk %}"
+        hx-target="#advisor-result"
+        hx-swap="innerHTML"
+        hx-trigger="load, change, input delay:250ms from:#advisor-range"
+        class="mb-4 space-y-3">
+
+    <div class="flex items-center gap-4">
+      <label class="w-32 shrink-0 text-sm text-[var(--ves-muted)]">Extra / day</label>
+      <input id="advisor-range"
+             type="range"
+             name="extra"
+             min="0" max="120" step="5" value="30"
+             class="flex-1 accent-[var(--ves-accent)]"
+             oninput="document.getElementById('advisor-value').textContent = this.value + ' min';" />
+      <span id="advisor-value" class="w-20 text-right text-sm font-medium tabular-nums">30 min</span>
+    </div>
+
+    <label class="ml-32 flex items-center gap-2 text-sm">
+      <input type="checkbox" name="weekday_only" value="1" checked
+             class="accent-[var(--ves-accent)]" />
+      Weekdays only
+    </label>
+  </form>
+
+  {# result — this is what HTMX swaps #}
+  <div id="advisor-result"
+       class="rounded-xl border border-[var(--ves-border)] p-4">
+    <p class="text-sm text-[var(--ves-muted)]">Loading advisor…</p>
+  </div>
+</section>
 
 {# HTMX for in-place session logging #}
 <script src="https://unpkg.com/htmx.org@1.9.12"></script>

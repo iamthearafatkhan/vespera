@@ -127,3 +127,52 @@ def forecast_course(course) -> Forecast:
         predicted_finish=predicted, earliest_finish=earliest, latest_finish=latest,
         momentum=momentum, is_complete=False,
     )
+
+# courses/services.py — append these
+
+def simulate_course(course, extra_minutes_per_day: int = 0, weekday_only: bool = True):
+    """Return a dict with the *simulated* forecast if the user adds
+    `extra_minutes_per_day` on weekdays (or every day).
+
+    We reuse the exact same math as forecast_course — only the daily series
+    changes. This keeps the baseline and the simulation directly comparable.
+    """
+    if extra_minutes_per_day <= 0:
+        return None  # caller will show the baseline only
+
+    series = _daily_series(course, window=WINDOW_DAYS)
+    today = timezone.localdate()
+    start = today - timedelta(days=WINDOW_DAYS - 1)
+
+    # apply the "what if" boost to each day in the window
+    boosted = []
+    for i, m in enumerate(series):
+        d = start + timedelta(days=i)
+        if weekday_only and d.weekday() >= 5:      # Sat=5, Sun=6
+            boosted.append(m)                      # weekend unchanged
+        else:
+            boosted.append(m + extra_minutes_per_day)
+
+    rate = _weighted_rate(boosted)
+    if rate < 1:
+        return None
+
+    remaining = course.remaining_minutes
+    days = remaining / rate
+
+    # same uncertainty propagation as the baseline
+    nonzero = [x for x in boosted if x > 0]
+    sigma_rate = pstdev(nonzero) if len(nonzero) >= 2 else 0
+    sigma_days = (remaining * sigma_rate / (rate ** 2)) if rate > 0 else 0
+
+    predicted = today + timedelta(days=round(days))
+    earliest = today + timedelta(days=max(0, round(days - CI_Z * sigma_days)))
+    latest = today + timedelta(days=round(days + CI_Z * sigma_days))
+
+    return {
+        "rate": rate,
+        "days_to_finish": round(days),
+        "predicted_finish": predicted,
+        "earliest_finish": earliest,
+        "latest_finish": latest,
+    }

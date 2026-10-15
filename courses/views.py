@@ -11,6 +11,7 @@ from django.views.decorators.http import require_http_methods
 from .forms import CourseForm, StudySessionForm
 from .models import Course
 from .services import forecast_course
+from .services import forecast_course, simulate_course
 
 
 def _get_user_course_or_404(request, pk) -> Course:
@@ -95,3 +96,35 @@ def archive_course(request, pk):
     course.save(update_fields=["is_archived"])
     messages.success(request, "Course archived.")
     return redirect("courses:list")
+
+
+
+@login_required
+def advisor(request, pk):
+    """HTMX endpoint — returns the advisor result fragment."""
+    course = _get_user_course_or_404(request, pk)
+
+    try:
+        extra = int(request.GET.get("extra", 0))
+    except (TypeError, ValueError):
+        extra = 0
+    extra = max(0, min(extra, 120))                          # cap at 2h
+
+    weekday_only = request.GET.get("weekday_only", "1") == "1"
+
+    baseline = forecast_course(course)
+    simulated = simulate_course(course, extra, weekday_only)
+
+    # delta in days — negative means "finishes sooner"
+    delta_days = None
+    if baseline.predicted_finish and simulated:
+        delta_days = (simulated["predicted_finish"] - baseline.predicted_finish).days
+
+    return render(request, "courses/_advisor.html", {
+        "course": course,
+        "baseline": baseline,
+        "simulated": simulated,
+        "extra": extra,
+        "weekday_only": weekday_only,
+        "delta_days": delta_days,
+    })
