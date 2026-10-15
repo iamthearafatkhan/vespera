@@ -1,73 +1,102 @@
 {% extends "base.html" %}
-{% block title %}Expenses · Vespera{% endblock %}
-<a href="{% url 'expenses:insights' %}"
-   class="rounded-xl border border-[var(--ves-border)] px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
-  Trends →
-</a>
+{% block title %}Courses · Vespera{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-5xl">
 
   <div class="mb-6 flex items-end justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-semibold tracking-tight">Expenses</h1>
-      <p class="mt-1 text-sm text-[var(--ves-muted)]">{{ month_label }} · spending snapshot</p>
+      <h1 class="text-3xl font-semibold tracking-tight">Courses</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">Track progress. See the finish line.</p>
     </div>
+    <a href="{% url 'courses:create' %}"
+       class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20 hover:brightness-110">
+      + Add course
+    </a>
   </div>
 
-  <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-
-    {# ---- left: add form ---- #}
-    <section class="lg:col-span-1 rounded-2xl ves-glass p-5">
-      <h2 class="mb-3 text-lg font-semibold">Add expense</h2>
-      <form hx-post="{% url 'expenses:add' %}"
-            hx-target="#recent-block"
-            hx-swap="innerHTML"
-            hx-on::after-request="if(event.detail.successful) this.reset()"
-            class="space-y-3">
-        {% csrf_token %}
-
-        <div>
-          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Amount</label>
-          <input type="number" name="amount" step="0.01" min="0" required
-                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Category</label>
-          <select name="category"
-                  class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]">
-            {% for value, label in form.fields.category.choices %}
-              <option value="{{ value }}">{{ label }}</option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs text-[var(--ves-muted)]">Description</label>
-          <input type="text" name="description" maxlength="200" placeholder="Optional"
-                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
-        </div>
-
-        <div>
-          <label class="mb-1 block text-xs text-[var(--ves-muted)]">When</label>
-          <input type="datetime-local" name="occurred_at" value="{{ form.occurred_at.value|default:'' }}"
-                 class="w-full rounded-xl border border-[var(--ves-border)] bg-transparent px-3 py-2 outline-none focus:border-[var(--ves-accent)]" />
-        </div>
-
-        <button type="submit"
-                class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
-          Save
-        </button>
-      </form>
-    </section>
-
-    {# ---- right: totals + list (HTMX target) ---- #}
-    <div id="recent-block" class="lg:col-span-2 space-y-4">
-      {% include "expenses/_recent.html" %}
+  {% if not rows %}
+    <div class="rounded-2xl ves-glass p-10 text-center">
+      <h2 class="text-xl font-semibold">Your first course starts here</h2>
+      <p class="mx-auto mt-2 max-w-md text-sm text-[var(--ves-muted)]">
+        Add a course and its total length. Vespera forecasts the finish date with a confidence range.
+      </p>
+      <a href="{% url 'courses:create' %}"
+         class="mt-6 inline-block rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+        Add your first course
+      </a>
     </div>
+  {% else %}
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      {% for course, f in rows %}
+        {# capture the hex in a template variable so both inline styles reuse it #}
+        {% with hex=course.color_hex %}
 
-  </div>
+        <a href="{% url 'courses:detail' course.pk %}"
+           class="ves-lift group relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover p-5 pl-7">
+
+          {# 6px solid left stripe — same colour as the course #}
+          <span class="absolute inset-y-0 left-0 w-1.5"
+                style="background-color: {{ hex }};"
+                aria-hidden="true"></span>
+
+          {# tinted radial glow inside the card #}
+          <span class="pointer-events-none absolute inset-0 -z-10 opacity-[0.12]"
+                style="background: radial-gradient(circle at 0% 50%, {{ hex }}, transparent 70%);"
+                aria-hidden="true"></span>
+
+          <div class="relative mb-3 flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <h3 class="flex items-center gap-2.5 truncate text-lg font-semibold leading-tight">
+                <span class="inline-block h-3.5 w-3.5 shrink-0 rounded-full"
+                      style="background-color: {{ hex }}; box-shadow: 0 0 12px {{ hex }};"></span>
+                {{ course.title }}
+              </h3>
+              {% if course.platform %}
+                <p class="mt-1 pl-6 text-xs uppercase tracking-wider text-[var(--ves-muted)]">
+                  {{ course.get_platform_display }}
+                </p>
+              {% endif %}
+            </div>
+
+            {% if f.is_complete %}
+              <span class="shrink-0 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-medium text-emerald-400">
+                Done
+              </span>
+            {% else %}
+              <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                    style="background-color: {{ hex }}26; color: {{ hex }};">
+                {{ f.progress_pct|floatformat:1 }}%
+              </span>
+            {% endif %}
+          </div>
+
+          {# thick colored progress bar #}
+          <div class="relative mb-3 h-2.5 w-full overflow-hidden rounded-full"
+               style="background: rgba(0,0,0,0.15);">
+            <span class="block h-full rounded-full transition-all duration-500"
+                  style="width: {{ f.progress_pct }}%; background-color: {{ hex }}; box-shadow: 0 0 18px {{ hex }};">
+            </span>
+          </div>
+
+          <div class="relative flex items-center justify-between text-xs text-[var(--ves-muted)]">
+            <span class="font-mono">{{ f.studied_minutes }} / {{ course.total_minutes }} min</span>
+            {% if f.is_complete %}
+              <span class="text-emerald-400">🎉 Complete</span>
+            {% elif f.predicted_finish %}
+              <span class="flex items-center gap-2">
+                <span class="ves-pulse {% if f.momentum == 'fading' %}amber{% elif f.momentum == 'stalled' %}red{% elif f.momentum == 'steady' %}grey{% endif %}"></span>
+                ETA {{ f.predicted_finish|date:"M j" }}
+              </span>
+            {% else %}
+              <span class="italic">Log a few sessions to forecast</span>
+            {% endif %}
+          </div>
+        </a>
+
+        {% endwith %}
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>
-
 {% endblock %}

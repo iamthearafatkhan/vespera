@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Expense trends · Vespera{% endblock %}
+{% block title %}Savings · Vespera{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-5xl space-y-5">
 
-  {# header + mode toggle #}
+  {# ---- header + mode toggle ---- #}
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
-      <h1 class="text-3xl font-semibold tracking-tight">Trends</h1>
-      <p class="mt-1 text-sm text-[var(--ves-muted)]">{{ label }} · spending analysis</p>
+      <h1 class="text-3xl font-semibold tracking-tight">Savings</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">{{ label }} · see where your money goes and what you saved.</p>
     </div>
 
     <div class="flex gap-1 rounded-xl border border-[var(--ves-border)] p-1 text-xs">
@@ -23,72 +23,134 @@
     </div>
   </div>
 
-  {# ---- KPI cards ---- #}
+  {# ---- savings hero card ---- #}
+  <div class="rounded-2xl ves-glass p-6 ves-glow-ring">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">
+          {% if savings_source == 'budget' %}Saved against budget{% else %}Saved vs previous {{ mode }}{% endif %}
+        </p>
+        <p class="mt-1 text-4xl font-semibold tracking-tight {% if savings >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
+          {% if savings >= 0 %}+{% endif %}{{ savings|floatformat:2 }}
+        </p>
+        <p class="mt-1 text-xs text-[var(--ves-muted)]">
+          {% if savings_source == 'budget' %}
+            Budget: {{ budget_for_period|floatformat:2 }} · spent: {{ this_total|floatformat:2 }}
+          {% else %}
+            This {{ mode }}: {{ this_total|floatformat:2 }} · previous: {{ last_total|floatformat:2 }}
+          {% endif %}
+        </p>
+      </div>
+
+      {% if spend_pct_of_target %}
+        <div class="text-right">
+          <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Budget used</p>
+          <p class="mt-1 text-2xl font-semibold">{{ spend_pct_of_target|floatformat:0 }}%</p>
+          <div class="mt-2 h-2 w-32 overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
+            <span class="block h-full rounded-full"
+                  style="width: {% if spend_pct_of_target > 100 %}100{% else %}{{ spend_pct_of_target|floatformat:0 }}{% endif %}%;
+                         background: {% if spend_pct_of_target > 90 %}#ef4444{% else %}var(--ves-accent){% endif %};">
+            </span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ---- KPI strip ---- #}
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">This {{ mode }}</p>
       <p class="mt-1 text-2xl font-semibold">{{ this_total|floatformat:2 }}</p>
     </div>
-
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Previous</p>
       <p class="mt-1 text-2xl font-semibold">{{ last_total|floatformat:2 }}</p>
     </div>
-
     <div class="ves-lift rounded-2xl ves-glass p-4">
-      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Difference</p>
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Change</p>
       <p class="mt-1 text-2xl font-semibold {% if delta > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
         {% if delta > 0 %}+{% endif %}{{ delta|floatformat:2 }}
       </p>
       {% if delta_pct is not None %}
         <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
-          {% if delta > 0 %}▲{% else %}▼{% endif %} {{ delta_pct|floatformat:1 }}% vs last
+          {{ delta_pct|floatformat:1 }}% vs last
         </p>
       {% endif %}
     </div>
-
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Trend</p>
       <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
-        <span class="ves-pulse {% if trend_label == 'rising' %}red{% elif trend_label == 'falling' %}{% else %}grey{% endif %}"></span>
+        <span class="ves-pulse {% if trend_label == 'rising' %}red{% elif trend_label == 'falling' %}grey{% else %}amber{% endif %}"></span>
         {{ trend_label|capfirst }}
       </p>
     </div>
   </div>
 
-  {# ---- history chart ---- #}
+  {# ---- history bar chart ---- #}
   <div class="rounded-2xl ves-glass p-5">
-    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
-      Last 6 {{ mode }}s
-    </h3>
-    <div class="relative h-[220px]">
+    <div class="mb-3 flex items-center justify-between">
+      <h3 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+        Last 8 {{ mode }}s
+      </h3>
+      {% if chart_budget %}
+        <span class="text-[11px] text-[var(--ves-muted)]">
+          Dashed line = budget per {{ mode }}
+        </span>
+      {% endif %}
+    </div>
+    <div class="relative h-[240px]">
       <canvas id="historyChart"></canvas>
     </div>
   </div>
 
-  {# ---- ML note ---- #}
-  {% if delta_pct is not None and delta_pct > 20 %}
-    <div class="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm">
-      <p class="font-medium text-red-400">Spending spike detected</p>
-      <p class="mt-1 text-[var(--ves-muted)]">
-        You're spending {{ delta_pct|floatformat:0 }}% more this {{ mode }} than last.
-        Check food delivery and shopping categories first — they move fastest.
-      </p>
-    </div>
-  {% elif delta_pct is not None and delta_pct < -15 %}
-    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
-      <p class="font-medium text-emerald-400">Saving well</p>
-      <p class="mt-1 text-[var(--ves-muted)]">
-        You're spending {{ delta_pct|floatformat:0|cut:"-" }}% less this {{ mode }}.
-        The trend is in your favour.
-      </p>
+  {# ---- category breakdown ---- #}
+  {% if cat_labels %}
+    <div class="rounded-2xl ves-glass p-5">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+        Where it went — this {{ mode }}
+      </h3>
+      <div class="relative h-[240px]">
+        <canvas id="categoryChart"></canvas>
+      </div>
     </div>
   {% endif %}
+
+  {# ---- budget setter ---- #}
+  <div class="rounded-2xl ves-glass p-5">
+    <h3 class="mb-1 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+      {% if budget and budget.amount > 0 %}Update budget{% else %}Set a monthly budget{% endif %}
+    </h3>
+    <p class="mb-4 text-xs text-[var(--ves-muted)]">
+      Optional. If you set a budget we show how much you saved against it.
+      Otherwise we compare to the previous {{ mode }}.
+    </p>
+
+    <form method="post" action="{% url 'expenses:set_budget' %}" class="flex flex-wrap items-center gap-3">
+      {% csrf_token %}
+      <input type="number" name="amount" step="0.01" min="0"
+             value="{% if budget %}{{ budget.amount }}{% endif %}"
+             placeholder="e.g. 5000"
+             class="w-40 rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)] dark:bg-white/5" />
+      <button type="submit"
+              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+        Save budget
+      </button>
+      {% if budget and budget.amount > 0 %}
+        <span class="text-xs text-[var(--ves-muted)]">
+          Current: {{ budget.amount|floatformat:2 }} / month
+        </span>
+      {% endif %}
+    </form>
+  </div>
 
 </div>
 
 {{ hist_labels|json_script:"hist-labels" }}
 {{ hist_values|json_script:"hist-values" }}
+{{ cat_labels|json_script:"cat-labels" }}
+{{ cat_values|json_script:"cat-values" }}
+{% if chart_budget %}{{ chart_budget|json_script:"chart-budget" }}{% endif %}
 {% endblock %}
 
 {% block extra_js %}
@@ -97,29 +159,85 @@
 (function () {
   const read = (id) => JSON.parse(document.getElementById(id).textContent);
   const css = getComputedStyle(document.documentElement);
-  const accent2 = css.getPropertyValue("--ves-accent-2").trim() || "#a9bcd0";
+  const accent  = css.getPropertyValue("--ves-accent").trim()  || "#58a4b0";
+  const accent2 = css.getPropertyValue("--ves-accent-2").trim()|| "#a9bcd0";
+  const gridColor = "rgba(128,128,128,.15)";
+
+  const histLabels = read("hist-labels");
+  const histValues = read("hist-values");
+
+  // ---- history bar chart (weekly / monthly totals) ----
+  const datasets = [{
+    data: histValues,
+    backgroundColor: accent2 + "cc",
+    hoverBackgroundColor: accent,
+    borderRadius: 8,
+    borderSkipped: false,
+    label: "Spend",
+  }];
+
+  // optional budget dashed line
+  const budgetEl = document.getElementById("chart-budget");
+  if (budgetEl) {
+    const budget = JSON.parse(budgetEl.textContent);
+    datasets.push({
+      type: "line",
+      data: histLabels.map(() => budget),
+      borderColor: "#ef4444",
+      borderDash: [6, 6],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+      label: "Budget",
+    });
+  }
 
   new Chart(document.getElementById("historyChart"), {
     type: "bar",
-    data: {
-      labels: read("hist-labels"),
-      datasets: [{
-        data: read("hist-values"),
-        backgroundColor: accent2 + "cc",
-        borderRadius: 8,
-        borderSkipped: false,
-      }],
-    },
+    data: { labels: histLabels, datasets },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
+      plugins: {
+        legend: { display: !!budgetEl, labels: { color: css.getPropertyValue("--ves-muted").trim() } },
+      },
       scales: {
         x: { grid: { display: false } },
-        y: { grid: { color: "rgba(128,128,128,.15)" }, border: { display: false }, beginAtZero: true },
+        y: { grid: { color: gridColor }, border: { display: false }, beginAtZero: true },
       },
     },
   });
+
+  // ---- category doughnut ----
+  const catEl = document.getElementById("categoryChart");
+  if (catEl) {
+    const catLabels = read("cat-labels");
+    const catValues = read("cat-values");
+    new Chart(catEl, {
+      type: "doughnut",
+      data: {
+        labels: catLabels,
+        datasets: [{
+          data: catValues,
+          backgroundColor: [
+            "#58a4b0", "#a9bcd0", "#8b7bff", "#2ee7d6",
+            "#f5a623", "#ef4444", "#10b981", "#64748b",
+          ],
+          borderWidth: 0,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: "right",
+            labels: { color: css.getPropertyValue("--ves-muted").trim(), boxWidth: 12, padding: 10 },
+          },
+        },
+      },
+    });
+  }
 })();
 </script>
 {% endblock %}
