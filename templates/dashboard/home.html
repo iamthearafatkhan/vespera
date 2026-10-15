@@ -60,29 +60,41 @@
           <strong class="text-[var(--ves-text)]">{{ risk.probability|floatformat:2 }}</strong>
         </p>
       </div>
+      {% if risk.model_auc %}
+  <p class="mt-0.5 text-[10px] text-[var(--ves-muted)] opacity-70">
+    Model ROC AUC: {{ risk.model_auc|floatformat:3 }} · calibrated
+  </p>
+{% endif %}
 
       {% if risk.top_drivers %}
-        <div class="text-right text-xs">
-          <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">What's pulling it down</p>
-          <ul class="space-y-0.5">
-            {% for name, contrib in risk.top_drivers %}
-              <li class="text-[var(--ves-muted)]">
-                {{ name }}
-                <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
-                  ({{ contrib|floatformat:2 }})
-                </span>
-              </li>
-            {% endfor %}
-          </ul>
-        </div>
-      {% endif %}
+  <div class="text-right text-xs">
+    <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">
+      {% if risk.label == 'on track' %}What's going well{% else %}What's pulling it down{% endif %}
+    </p>
+    <ul class="space-y-0.5">
+      {% for name, contrib in risk.top_drivers %}
+        <li class="text-[var(--ves-muted)]">
+          {{ name }}
+          <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+            ({{ contrib|floatformat:2 }})
+          </span>
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+{% endif %}
     </div>
 
+    
     {% if risk.label == 'at risk' %}
-      <p class="mt-3 text-xs text-[var(--ves-muted)]">
-        Even 15 minutes today changes tomorrow's number. Small wins compound.
-      </p>
-    {% endif %}
+  <p class="mt-3 text-xs text-[var(--ves-muted)]">
+    Even 15 minutes today changes tomorrow's number. Small wins compound.
+  </p>
+{% elif risk.label == 'on track' %}
+  <p class="mt-3 text-xs text-[var(--ves-muted)]">
+    Momentum's strong. Keep doing what you're doing — the forecast knows.
+  </p>
+{% endif %}
   </div>
 
   {# ---- Cross-domain insights ---- #}

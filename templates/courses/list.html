@@ -4,22 +4,20 @@
 {% block content %}
 <div class="mx-auto max-w-5xl">
 
-  {# header #}
   <div class="mb-6 flex items-end justify-between gap-4">
     <div>
       <h1 class="text-3xl font-semibold tracking-tight">Courses</h1>
       <p class="mt-1 text-sm text-[var(--ves-muted)]">Track progress. See the finish line.</p>
     </div>
     <a href="{% url 'courses:create' %}"
-       class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20 hover:brightness-110">
+       class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20 hover:brightness-110">
       + Add course
     </a>
   </div>
 
   {% if not rows %}
-    {# ---------- Empty state: intentional, motivational ---------- #}
     <div class="rounded-2xl ves-glass p-10 text-center">
-      <div class="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-white shadow-lg shadow-violet-500/30">
+      <div class="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-white shadow-lg shadow-[color:var(--ves-accent)]/30">
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
           <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
@@ -31,7 +29,7 @@
         the finish date — with a confidence range — so you always know where you stand.
       </p>
       <a href="{% url 'courses:create' %}"
-         class="mt-6 inline-block rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
+         class="mt-6 inline-block rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
         Add your first course
       </a>
     </div>
@@ -39,24 +37,43 @@
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       {% for course, f in rows %}
         <a href="{% url 'courses:detail' course.pk %}"
-           class="block rounded-2xl ves-glass ves-glass-hover p-5">
-          <div class="mb-3 flex items-start justify-between gap-3">
-            <h3 class="text-lg font-semibold leading-tight">{{ course.title }}</h3>
+           class="ves-lift relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover p-5"
+           style="--cc: {{ course.color_hex }}; --cc2: color-mix(in oklab, {{ course.color_hex }} 40%, white);">
+
+          {# left accent stripe #}
+          <span class="absolute inset-y-0 left-0 w-1.5"
+                style="background: linear-gradient(180deg, var(--cc), transparent);"
+                aria-hidden="true"></span>
+
+          {# soft glow inside the card, tinted with the course colour #}
+          <span class="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full opacity-20 blur-3xl"
+                style="background: var(--cc);" aria-hidden="true"></span>
+
+          <div class="relative mb-3 flex items-start justify-between gap-3 pl-2">
+            <div class="min-w-0">
+              <h3 class="flex items-center gap-2 truncate text-lg font-semibold leading-tight">
+                <span class="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style="background: var(--cc); box-shadow: 0 0 12px var(--cc);"></span>
+                {{ course.title }}
+              </h3>
               {% if course.platform %}
-                <p class="mb-2 text-xs uppercase tracking-wider text-[var(--ves-muted)]">{{ course.get_platform_display }}</p>
+                <p class="mt-1 pl-5 text-xs uppercase tracking-wider text-[var(--ves-muted)]">{{ course.get_platform_display }}</p>
               {% endif %}
-              {% if f.is_complete %}
-                <span class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">Done</span>
-              {% else %}
-                <span class="rounded-full bg-black/5 px-2 py-0.5 text-xs text-[var(--ves-muted)] dark:bg-white/5">
-                  {{ f.progress_pct|floatformat:1 }}%
-                </span>
-              {% endif %}
+            </div>
+            {% if f.is_complete %}
+              <span class="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">Done</span>
+            {% else %}
+              <span class="shrink-0 rounded-full bg-black/5 px-2 py-0.5 text-xs text-[var(--ves-muted)] dark:bg-white/5">
+                {{ f.progress_pct|floatformat:1 }}%
+              </span>
+            {% endif %}
           </div>
 
-          <div class="ves-progress mb-3"><span style="width: {{ f.progress_pct }}%"></span></div>
+          <div class="ves-progress relative mb-3 ml-2">
+            <span style="width: {{ f.progress_pct }}%; background: linear-gradient(92deg, var(--cc), var(--cc2)); box-shadow: 0 0 14px -2px var(--cc);"></span>
+          </div>
 
-          <div class="flex items-center justify-between text-xs text-[var(--ves-muted)]">
+          <div class="relative flex items-center justify-between pl-2 text-xs text-[var(--ves-muted)]">
             <span>{{ f.studied_minutes }} / {{ course.total_minutes }} min</span>
             {% if f.is_complete %}
               <span class="text-emerald-500">🎉 Complete</span>

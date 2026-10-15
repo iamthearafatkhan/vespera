@@ -24,7 +24,7 @@
   {% block extra_css %}{% endblock %}
 </head>
 
-<body class="h-full">
+<body class="h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
 
   {# Vanta lives here — ALWAYS rendered, on every page including login/signup/landing #}
   <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>

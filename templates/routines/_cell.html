@@ -1,9 +1,11 @@
-{# Single toggleable check-in cell — also served as HTMX partial #}
+{# templates/routines/_cell.html #}
 <button hx-post="{% url 'routines:toggle' habit.id day|date:'Y-m-d' %}"
         hx-swap="outerHTML"
+        hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+        title="{% if done %}Checked in {{ day|date:'M j' }}{% else %}Click to check in{% endif %}"
         class="mx-auto grid h-9 w-9 place-items-center rounded-xl border transition
           {% if done %}
-            border-transparent bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-white shadow-lg shadow-violet-500/30
+            border-transparent bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-white shadow-lg shadow-[color:var(--ves-accent)]/30
           {% else %}
             border-[var(--ves-border)] text-transparent hover:border-[var(--ves-accent)] hover:text-[var(--ves-accent)]
           {% endif %}">

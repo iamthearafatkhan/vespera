@@ -31,6 +31,20 @@ class DropoutRiskTests(TestCase):
         for name, contrib in r.top_drivers:
             self.assertIn(name, FEATURE_NAMES)
 
+    def test_perfect_consistency_good_signal(self):
+        features = [1.0, 3.0, 7.0, 60.0, 0.0, 0.9, 0.8, 20.0]
+        r = predict_dropout_risk(features)
+        self.assertEqual(len(r.top_drivers), 3)
+        # high consistency → model says they'll study → on track
+        self.assertGreater(r.probability, 0.5)
+
+    def test_stalled_user_at_risk(self):
+        features = [0.0, 0.0, 0.0, 0.0, 21.0, 0.0, 0.0, 0.0]
+        r = predict_dropout_risk(features)
+        self.assertLess(r.probability, 0.5)
+        # low probability → at risk
+        self.assertIn(r.label, ["at risk", "watch"])
+
 
 
 
