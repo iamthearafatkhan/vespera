@@ -86,6 +86,37 @@
   {% endif %}
 </div>
 
+{# ---- Cross-domain insights ---- #}
+{% if insights %}
+<section class="rounded-2xl ves-glass p-5">
+  <div class="mb-3 flex items-center justify-between">
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+      Patterns we noticed
+    </h2>
+    <span class="text-xs text-[var(--ves-muted)]">Last 60 days</span>
+  </div>
+
+  <ul class="space-y-2.5 text-sm">
+    {% for i in insights %}
+      <li class="flex items-start gap-3">
+        <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)]"></span>
+        <div>
+          <p>{{ i.title }}</p>
+          <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
+            r = {{ i.r|floatformat:2 }} · based on {{ i.sample }} days
+          </p>
+        </div>
+      </li>
+    {% endfor %}
+  </ul>
+
+  <p class="mt-3 text-[11px] leading-relaxed text-[var(--ves-muted)]">
+    These are correlations, not causes. They're meant as food for thought,
+    not instructions.
+  </p>
+</section>
+{% endif %}
+
   {# ---- hero forecast ---- #}
   {% if hero_course %}
     <a href="{% url 'courses:detail' hero_course.pk %}"
@@ -134,22 +165,32 @@
     </div>
   {% endif %}
 
-  {# ---- charts ---- #}
+    {# ---- charts ---- #}
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+
     <div class="rounded-2xl ves-glass p-5">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Study · last 14 days</h3>
-      <canvas id="studyChart" height="140"></canvas>
+      {# fixed-height wrapper — Chart.js fills this, no growing #}
+      <div class="relative h-[200px]">
+        <canvas id="studyChart"></canvas>
+      </div>
     </div>
+
     <div class="rounded-2xl ves-glass p-5">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Spend · last 30 days</h3>
-      <canvas id="spendChart" height="140"></canvas>
+      <div class="relative h-[200px]">
+        <canvas id="spendChart"></canvas>
+      </div>
     </div>
+
     <div class="rounded-2xl ves-glass p-5 lg:col-span-2">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Habit completion · last 7 days</h3>
-      <canvas id="habitChart" height="90"></canvas>
+      <div class="relative h-[180px]">
+        <canvas id="habitChart"></canvas>
+      </div>
     </div>
+
   </div>
-</div>
 
 {# pass Python data to JS safely #}
 {{ study_labels|json_script:"study-labels" }}
