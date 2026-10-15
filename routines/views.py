@@ -1,5 +1,5 @@
 # routines/views.py
-from datetime import date, timedelta
+from datetime import date, time, timedelta
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,6 +9,10 @@ from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from .models import Habit, HabitCheckin
+
+# routines/views.py — add these imports
+
+from .models import Habit, HabitCheckin, ClassEntry, ImportantDate
 
 
 @login_required
@@ -82,3 +86,113 @@ def habit_archive(request, pk):
     habit.is_archived = True
     habit.save(update_fields=["is_archived"])
     return redirect("routines:board")
+
+
+
+
+# ---------- Class schedule ----------
+
+def _schedule_grid(user):
+    """Return rows for a week: 7 days, each with its classes."""
+    days = []
+    today = timezone.localdate()
+    for d in range(7):
+        entries = user.classes.filter(day=d, is_active=True).order_by("start_time")
+        days.append({"index": d, "name": ClassEntry.DAY_CHOICES[d][1], "entries": entries})
+    return days
+
+
+@login_required
+def schedule(request):
+    return render(request, "routines/schedule.html", {
+        "week": _schedule_grid(request.user),
+        "kinds": ClassEntry.KIND_CHOICES,
+    })
+
+
+@login_required
+@require_POST
+def class_create(request):
+    subject = (request.POST.get("subject") or "").strip()
+    day = request.POST.get("day")
+    start = request.POST.get("start_time")
+    end = request.POST.get("end_time")
+    kind = request.POST.get("kind") or "lecture"
+    room = (request.POST.get("room") or "").strip()
+    teacher = (request.POST.get("teacher") or "").strip()
+
+    if not (subject and day is not None and start and end):
+        messages.error(request, "Subject, day, start and end are required.")
+        return redirect("routines:schedule")
+
+    ClassEntry.objects.create(
+        user=request.user,
+        subject=subject,
+        day=int(day),
+        start_time=start,
+        end_time=end,
+        kind=kind,
+        room=room,
+        teacher=teacher,
+    )
+    messages.success(request, "Class added.")
+    return redirect("routines:schedule")
+
+
+@login_required
+@require_POST
+def class_delete(request, pk):
+    entry = get_object_or_404(ClassEntry, pk=pk, user=request.user)
+    entry.delete()
+    messages.success(request, "Class removed.")
+    return redirect("routines:schedule")
+
+
+# ---------- Important dates ----------
+
+@login_required
+@require_POST
+def date_create(request):
+    title = (request.POST.get("title") or "").strip()
+    kind = request.POST.get("kind") or "exam"
+    d = request.POST.get("date")
+    t = request.POST.get("time") or None
+    course_id = request.POST.get("related_course") or None
+
+    if not (title and d):
+        messages.error(request, "Title and date required.")
+        return redirect("routines:important_dates")
+
+    ImportantDate.objects.create(
+        user=request.user,
+        title=title,
+        kind=kind,
+        date=d,
+        time=t,
+        related_course_id=course_id,
+        notes=(request.POST.get("notes") or "").strip(),
+    )
+    messages.success(request, "Reminder added.")
+    return redirect("routines:important_dates")
+
+
+@login_required
+@require_POST
+def date_delete(request, pk):
+    item = get_object_or_404(ImportantDate, pk=pk, user=request.user)
+    item.delete()
+    messages.success(request, "Reminder removed.")
+    return redirect("routines:important_dates")
+
+
+@login_required
+def important_dates(request):
+    today = timezone.localdate()
+    upcoming = request.user.important_dates.filter(date__gte=today).order_by("date", "time")
+    past = request.user.important_dates.filter(date__lt=today).order_by("-date")[:10]
+    return render(request, "routines/important_dates.html", {
+        "upcoming": upcoming,
+        "past": past,
+        "kinds": ImportantDate.KIND_CHOICES,
+        "courses": request.user.courses.filter(is_archived=False),
+    })

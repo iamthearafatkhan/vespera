@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% block title %}Class schedule · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-6xl space-y-5">
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight">Class schedule</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">Weekly timetable — add classes once, see them every week.</p>
+    </div>
+    <div class="flex gap-2">
+      <a href="{% url 'routines:board' %}"
+         class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        ← Habits
+      </a>
+      <a href="{% url 'routines:important_dates' %}"
+         class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        Important dates →
+      </a>
+    </div>
+  </div>
+
+  {# ---- add class ---- #}
+  <form method="post" action="{% url 'routines:class_create' %}"
+        class="rounded-2xl ves-glass p-5">
+    {% csrf_token %}
+    <h2 class="mb-4 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Add a class</h2>
+
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-6">
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Subject</label>
+        <input type="text" name="subject" required maxlength="80"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)] dark:bg-white/5" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Day</label>
+        <select name="day" required
+                class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5">
+          <option value="0">Monday</option>
+          <option value="1">Tuesday</option>
+          <option value="2">Wednesday</option>
+          <option value="3">Thursday</option>
+          <option value="4">Friday</option>
+          <option value="5">Saturday</option>
+          <option value="6">Sunday</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Kind</label>
+        <select name="kind"
+                class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5">
+          {% for k, label in kinds %}
+            <option value="{{ k }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Start</label>
+        <input type="time" name="start_time" required
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">End</label>
+        <input type="time" name="end_time" required
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Room (optional)</label>
+        <input type="text" name="room" maxlength="40"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Teacher (optional)</label>
+        <input type="text" name="teacher" maxlength="80"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2 flex items-end">
+        <button type="submit"
+                class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+          Add class
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {# ---- weekly grid ---- #}
+  <div class="grid grid-cols-1 gap-3 md:grid-cols-7">
+    {% for day in week %}
+      <div class="rounded-2xl ves-glass p-4">
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--ves-muted)]">{{ day.name }}</p>
+
+        {% if not day.entries %}
+          <p class="text-xs italic text-[var(--ves-muted)]">No classes</p>
+        {% else %}
+          <ul class="space-y-2">
+            {% for e in day.entries %}
+              <li class="rounded-xl border border-[var(--ves-border)] p-3 text-xs">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <p class="font-medium truncate">{{ e.subject }}</p>
+                    <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
+                      {{ e.start_time|time:"H:i" }}–{{ e.end_time|time:"H:i" }}
+                    </p>
+                    {% if e.room %}<p class="mt-0.5 text-[10px] text-[var(--ves-muted)]">Room {{ e.room }}</p>{% endif %}
+                  </div>
+                  <form method="post" action="{% url 'routines:class_delete' e.pk %}">
+                    {% csrf_token %}
+                    <button class="text-[10px] text-[var(--ves-muted)] hover:text-red-400"
+                            data-confirm="Delete this class?">×</button>
+                  </form>
+                </div>
+              </article>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}Expense trends · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-5">
+
+  {# header + mode toggle #}
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight">Trends</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">{{ label }} · spending analysis</p>
+    </div>
+
+    <div class="flex gap-1 rounded-xl border border-[var(--ves-border)] p-1 text-xs">
+      <a href="?mode=week"
+         class="rounded-lg px-3 py-1.5 {% if mode == 'week' %}bg-[var(--ves-accent)] text-white{% else %}hover:bg-black/5 dark:hover:bg-white/5{% endif %}">
+        Weekly
+      </a>
+      <a href="?mode=month"
+         class="rounded-lg px-3 py-1.5 {% if mode == 'month' %}bg-[var(--ves-accent)] text-white{% else %}hover:bg-black/5 dark:hover:bg-white/5{% endif %}">
+        Monthly
+      </a>
+    </div>
+  </div>
+
+  {# ---- KPI cards ---- #}
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+    <div class="ves-lift rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">This {{ mode }}</p>
+      <p class="mt-1 text-2xl font-semibold">{{ this_total|floatformat:2 }}</p>
+    </div>
+
+    <div class="ves-lift rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Previous</p>
+      <p class="mt-1 text-2xl font-semibold">{{ last_total|floatformat:2 }}</p>
+    </div>
+
+    <div class="ves-lift rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Difference</p>
+      <p class="mt-1 text-2xl font-semibold {% if delta > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+        {% if delta > 0 %}+{% endif %}{{ delta|floatformat:2 }}
+      </p>
+      {% if delta_pct is not None %}
+        <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
+          {% if delta > 0 %}▲{% else %}▼{% endif %} {{ delta_pct|floatformat:1 }}% vs last
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="ves-lift rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Trend</p>
+      <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
+        <span class="ves-pulse {% if trend_label == 'rising' %}red{% elif trend_label == 'falling' %}{% else %}grey{% endif %}"></span>
+        {{ trend_label|capfirst }}
+      </p>
+    </div>
+  </div>
+
+  {# ---- history chart ---- #}
+  <div class="rounded-2xl ves-glass p-5">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+      Last 6 {{ mode }}s
+    </h3>
+    <div class="relative h-[220px]">
+      <canvas id="historyChart"></canvas>
+    </div>
+  </div>
+
+  {# ---- ML note ---- #}
+  {% if delta_pct is not None and delta_pct > 20 %}
+    <div class="rounded-2xl border border-red-500/30 bg-red-500/5 p-4 text-sm">
+      <p class="font-medium text-red-400">Spending spike detected</p>
+      <p class="mt-1 text-[var(--ves-muted)]">
+        You're spending {{ delta_pct|floatformat:0 }}% more this {{ mode }} than last.
+        Check food delivery and shopping categories first — they move fastest.
+      </p>
+    </div>
+  {% elif delta_pct is not None and delta_pct < -15 %}
+    <div class="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 text-sm">
+      <p class="font-medium text-emerald-400">Saving well</p>
+      <p class="mt-1 text-[var(--ves-muted)]">
+        You're spending {{ delta_pct|floatformat:0|cut:"-" }}% less this {{ mode }}.
+        The trend is in your favour.
+      </p>
+    </div>
+  {% endif %}
+
+</div>
+
+{{ hist_labels|json_script:"hist-labels" }}
+{{ hist_values|json_script:"hist-values" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const read = (id) => JSON.parse(document.getElementById(id).textContent);
+  const css = getComputedStyle(document.documentElement);
+  const accent2 = css.getPropertyValue("--ves-accent-2").trim() || "#a9bcd0";
+
+  new Chart(document.getElementById("historyChart"), {
+    type: "bar",
+    data: {
+      labels: read("hist-labels"),
+      datasets: [{
+        data: read("hist-values"),
+        backgroundColor: accent2 + "cc",
+        borderRadius: 8,
+        borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false } },
+        y: { grid: { color: "rgba(128,128,128,.15)" }, border: { display: false }, beginAtZero: true },
+      },
+    },
+  });
+})();
+</script>
+{% endblock %}

@@ -64,3 +64,83 @@ class HabitCheckin(models.Model):
 
     def __str__(self):
         return f"{self.habit.name} · {self.day}"
+
+
+# routines/models.py — append
+
+class ClassEntry(models.Model):
+    """A recurring class in the user's weekly timetable."""
+
+    DAY_CHOICES = [(0, "Mon"), (1, "Tue"), (2, "Wed"), (3, "Thu"),
+                   (4, "Fri"), (5, "Sat"), (6, "Sun")]
+
+    KIND_CHOICES = [
+        ("lecture", "Lecture"),
+        ("lab",     "Lab"),
+        ("tutorial","Tutorial"),
+        ("other",   "Other"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="classes")
+    subject = models.CharField(max_length=80)
+    day = models.IntegerField(choices=DAY_CHOICES)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    room = models.CharField(max_length=40, blank=True)
+    teacher = models.CharField(max_length=80, blank=True)
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default="lecture")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["day", "start_time"]
+
+    def __str__(self):
+        return f"{self.subject} · {self.get_day_display()} {self.start_time}"
+
+
+class ImportantDate(models.Model):
+    """Exam, CT, assignment deadline — anything with a specific date."""
+
+    KIND_CHOICES = [
+        ("exam",       "Exam"),
+        ("ct",         "Class Test"),
+        ("assignment", "Assignment"),
+        ("project",    "Project"),
+        ("deadline",   "Deadline"),
+    ]
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="important_dates")
+    title = models.CharField(max_length=120)
+    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default="exam")
+    date = models.DateField()
+    time = models.TimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    related_course = models.ForeignKey(
+        "courses.Course", on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="important_dates",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["date", "time"]
+
+    def __str__(self):
+        return f"{self.get_kind_display()}: {self.title}"
+
+    @property
+    def days_until(self) -> int:
+        return (self.date - timezone.localdate()).days
+
+    @property
+    def urgency(self) -> str:
+        """Rough priority bucket based on days_until and kind."""
+        d = self.days_until
+        if d < 0:
+            return "past"
+        if d <= 2:
+            return "critical"
+        if d <= 7:
+            return "soon"
+        if d <= 14:
+            return "upcoming"
+        return "later"

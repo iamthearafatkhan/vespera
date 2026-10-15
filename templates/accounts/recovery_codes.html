@@ -37,9 +37,9 @@
           class="flex flex-wrap gap-3">
       {% csrf_token %}
       <button type="submit"
-              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20"
-              onclick="return confirm('Old unused codes will stop working. Generate new ones?');">
-        Generate new codes
+        class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20"
+        data-confirm="Old unused codes will stop working. Generate new ones?">
+            Generate new codes
       </button>
       <a href="{% url 'accounts:profile' %}"
          class="rounded-xl border border-[var(--ves-border)] px-5 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">

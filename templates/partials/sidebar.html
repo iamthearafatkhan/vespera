@@ -1,4 +1,4 @@
-{# templates/partials/sidebar.html — clean, no duplicates #}
+{# templates/partials/sidebar.html — premium version #}
 <aside id="sidebar"
        class="fixed inset-y-0 left-0 z-40 w-64 -translate-x-full transform
               border-r border-white/5 transition-transform duration-300
@@ -6,52 +6,72 @@
 
   <div class="flex h-full flex-col ves-glass !rounded-none !border-y-0 !border-l-0">
 
-    {# ---- brand ---- #}
-    <a href="{% url 'dashboard:home' %}" class="flex h-16 items-center gap-2.5 px-5">
-      {# the Vespera stopwatch logo — see Part 3 #}
-      {% include "partials/logo.html" with size=34 %}
+    {# ---- brand with hover rotation ---- #}
+    <a href="{% url 'dashboard:home' %}"
+       class="group flex h-16 items-center gap-2.5 px-5">
+      <span class="transition-transform duration-500 ease-out group-hover:rotate-[18deg] group-hover:scale-110">
+        {% include "partials/logo.html" with size=34 %}
+      </span>
       <span class="ves-wordmark text-lg">Vespera</span>
     </a>
 
-    {# ---- nav ---- #}
-    <nav class="flex-1 space-y-1 p-3 text-sm">
+    {# ---- nav with sections ---- #}
+    <nav class="flex-1 space-y-0.5 overflow-y-auto p-3 text-sm">
       {% with current=request.resolver_match.namespace %}
 
+        <p class="sidebar-label">Track</p>
+
         <a href="{% url 'dashboard:home' %}"
-           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
-                  {% if current == 'dashboard' %}nav-active{% else %}nav-idle{% endif %}">
-          <span class="text-base">🏠</span> Dashboard
+           class="sidebar-link {% if current == 'dashboard' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">🏠</span> Dashboard
         </a>
 
         <a href="{% url 'courses:list' %}"
-           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
-                  {% if current == 'courses' %}nav-active{% else %}nav-idle{% endif %}">
-          <span class="text-base">📚</span> Courses
+           class="sidebar-link {% if current == 'courses' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">📚</span> Courses
         </a>
 
         <a href="{% url 'expenses:list' %}"
-           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
-                  {% if current == 'expenses' %}nav-active{% else %}nav-idle{% endif %}">
-          <span class="text-base">💸</span> Expenses
+           class="sidebar-link {% if current == 'expenses' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">💸</span> Expenses
         </a>
 
         <a href="{% url 'routines:board' %}"
-           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
-                  {% if current == 'routines' %}nav-active{% else %}nav-idle{% endif %}">
-          <span class="text-base">⏱️</span> Routine
+           class="sidebar-link {% if current == 'routines' and '/schedule/' not in request.path and '/dates/' not in request.path %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">⏱️</span> Routine
         </a>
 
+        <p class="sidebar-label">Plan</p>
+
+        <a href="{% url 'routines:schedule' %}"
+           class="sidebar-link {% if '/schedule/' in request.path %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">📅</span> Schedule
+        </a>
+
+        <a href="{% url 'routines:important_dates' %}"
+           class="sidebar-link {% if '/dates/' in request.path %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">🔔</span> Important dates
+        </a>
+
+        <p class="sidebar-label">You</p>
+
         <a href="{% url 'accounts:profile' %}"
-           class="flex items-center gap-3 rounded-xl px-3 py-2.5 transition
-                  {% if current == 'accounts' %}nav-active{% else %}nav-idle{% endif %}">
-          <span class="text-base">👤</span> Profile
+           class="sidebar-link {% if current == 'accounts' %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">👤</span> Profile
         </a>
 
       {% endwith %}
     </nav>
 
-    <div class="border-t border-white/5 p-3 text-xs text-[var(--ves-muted)]">
-      v0.4 · Phase&nbsp;4
+    {# ---- footer status ---- #}
+    <div class="border-t border-white/5 p-3">
+      <div class="flex items-center gap-2 rounded-xl px-3 py-2 text-[11px] text-[var(--ves-muted)]">
+        <span class="relative flex h-2 w-2">
+          <span class="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60"></span>
+          <span class="relative h-2 w-2 rounded-full bg-emerald-400"></span>
+        </span>
+        <span>v0.5 · All systems live</span>
+      </div>
     </div>
   </div>
 </aside>

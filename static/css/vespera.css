@@ -496,3 +496,128 @@ select option {
     animation-delay: .18s;
   }
 }
+
+/* ================================================================
+   SIDEBAR — premium nav polish
+   ================================================================ */
+
+.sidebar-label {
+  padding: 1rem 0.75rem 0.35rem;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ves-muted);
+  opacity: 0.55;
+}
+
+.sidebar-link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: background-color .25s ease, color .25s ease, transform .25s ease;
+  overflow: hidden;
+}
+
+/* animated left indicator bar */
+.sidebar-link::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 55%;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--ves-accent);
+  transform: translateY(-50%) scaleY(0);
+  transform-origin: center;
+  transition: transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+
+.sidebar-link:hover::before,
+.sidebar-link.nav-active::before {
+  transform: translateY(-50%) scaleY(1);
+}
+
+/* icon nudge on hover */
+.sidebar-icon {
+  display: inline-flex;
+  width: 1.25rem;
+  justify-content: center;
+  font-size: 1rem;
+  transition: transform .3s cubic-bezier(.22, .61, .36, 1);
+}
+
+.sidebar-link:hover .sidebar-icon {
+  transform: scale(1.18) rotate(-6deg);
+}
+
+/* slide-right on hover (subtle) */
+.sidebar-link:hover {
+  transform: translateX(2px);
+}
+
+/* active state — accent bar glows + subtle bg */
+.sidebar-link.nav-active {
+  color: var(--ves-accent);
+}
+
+/* stagger entrance on first paint */
+@media (prefers-reduced-motion: no-preference) {
+  .sidebar-link {
+    animation: sidebar-in .45s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  .sidebar-link:nth-of-type(1) {
+    animation-delay: .02s;
+  }
+
+  .sidebar-link:nth-of-type(2) {
+    animation-delay: .06s;
+  }
+
+  .sidebar-link:nth-of-type(3) {
+    animation-delay: .10s;
+  }
+
+  .sidebar-link:nth-of-type(4) {
+    animation-delay: .14s;
+  }
+
+  .sidebar-link:nth-of-type(5) {
+    animation-delay: .18s;
+  }
+
+  .sidebar-link:nth-of-type(6) {
+    animation-delay: .22s;
+  }
+
+  .sidebar-link:nth-of-type(7) {
+    animation-delay: .26s;
+  }
+
+  @keyframes sidebar-in {
+    from {
+      opacity: 0;
+      transform: translateX(-8px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .sidebar-link,
+  .sidebar-icon,
+  .sidebar-link::before {
+    transition: none !important;
+    animation: none !important;
+  }
+}

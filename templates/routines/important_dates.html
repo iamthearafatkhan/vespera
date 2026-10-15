@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Important dates · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-4xl space-y-5">
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <div>
+      <h1 class="text-3xl font-semibold tracking-tight">Important dates</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">Exams, CTs, deadlines — shown on your dashboard as they approach.</p>
+    </div>
+    <a href="{% url 'routines:schedule' %}"
+       class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+      Class schedule →
+    </a>
+  </div>
+
+  {# ---- add reminder ---- #}
+  <form method="post" action="{% url 'routines:date_create' %}"
+        class="rounded-2xl ves-glass p-5 space-y-3">
+    {% csrf_token %}
+    <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Add reminder</h2>
+
+    <div class="grid grid-cols-1 gap-3 md:grid-cols-6">
+      <div class="md:col-span-3">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Title</label>
+        <input type="text" name="title" required maxlength="120" placeholder="e.g. Data Structures CT-2"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Kind</label>
+        <select name="kind"
+                class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5">
+          {% for k, label in kinds %}<option value="{{ k }}">{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Date</label>
+        <input type="date" name="date" required
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Time (optional)</label>
+        <input type="time" name="time"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5" />
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="mb-1 block text-xs text-[var(--ves-muted)]">Related course (optional)</label>
+        <select name="related_course"
+                class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm dark:bg-white/5">
+          <option value="">— none —</option>
+          {% for c in courses %}<option value="{{ c.pk }}">{{ c.title }}</option>{% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-2 flex items-end">
+        <button type="submit"
+                class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+          Add reminder
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {# ---- upcoming ---- #}
+  <section class="rounded-2xl ves-glass p-5">
+    <h2 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Upcoming</h2>
+
+    {% if not upcoming %}
+      <p class="text-sm text-[var(--ves-muted)]">Nothing scheduled. Add a reminder above.</p>
+    {% else %}
+      <ul class="divide-y divide-[var(--ves-border)]">
+        {% for d in upcoming %}
+          <li class="flex items-center justify-between gap-3 py-3">
+            <div class="min-w-0 flex items-center gap-3">
+              <span class="flex h-10 w-10 shrink-0 flex-col items-center justify-center rounded-xl text-[10px] font-semibold leading-none
+                {% if d.urgency == 'critical' %}bg-red-500/15 text-red-400
+                {% elif d.urgency == 'soon' %}bg-amber-500/15 text-amber-400
+                {% else %}bg-[var(--ves-accent)]/15 text-[var(--ves-accent)]{% endif %}">
+                <span class="text-base">{{ d.date|date:"j" }}</span>
+                <span class="uppercase">{{ d.date|date:"M" }}</span>
+              </span>
+
+              <div class="min-w-0">
+                <p class="font-medium truncate">{{ d.title }}</p>
+                <p class="text-xs text-[var(--ves-muted)]">
+                  {{ d.get_kind_display }}
+                  {% if d.time %} · {{ d.time|time:"H:i" }}{% endif %}
+                  · in {{ d.days_until }} day{{ d.days_until|pluralize }}
+                </p>
+              </div>
+            </div>
+
+            <form method="post" action="{% url 'routines:date_delete' d.pk %}">
+              {% csrf_token %}
+              <button class="text-xs text-[var(--ves-muted)] hover:text-red-400"
+                      data-confirm="Delete this reminder?">delete</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </section>
+
+</div>
+{% endblock %}

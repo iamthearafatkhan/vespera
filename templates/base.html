@@ -53,5 +53,84 @@
 
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   {% block extra_js %}{% endblock %}
+
+  {# ---------- Global confirm modal ---------- #}
+<div id="ves-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" data-modal-dismiss></div>
+
+  <div class="relative w-full max-w-sm rounded-2xl ves-glass p-6 shadow-2xl">
+    <h3 id="ves-modal-title" class="text-lg font-semibold">Are you sure?</h3>
+    <p id="ves-modal-body" class="mt-2 text-sm text-[var(--ves-muted)]"></p>
+
+    <div class="mt-6 flex justify-end gap-2">
+      <button data-modal-dismiss
+              class="rounded-xl border border-[var(--ves-border)] px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        Cancel
+      </button>
+      <button id="ves-modal-confirm"
+              class="rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-red-500/20">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Generic confirm dialog — replaces ugly browser confirm()
+  // Usage: any element with [data-confirm="message"] intercepts its action.
+  (function () {
+    var modal = document.getElementById('ves-modal');
+    var titleEl = document.getElementById('ves-modal-title');
+    var bodyEl = document.getElementById('ves-modal-body');
+    var confirmBtn = document.getElementById('ves-modal-confirm');
+    if (!modal) return;
+
+    var pendingEl = null;
+
+    function open(message, el) {
+      bodyEl.textContent = message;
+      pendingEl = el;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function close() {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingEl = null;
+    }
+
+    document.addEventListener('click', function (e) {
+      // dismiss
+      if (e.target.closest('[data-modal-dismiss]')) { close(); return; }
+
+      // open — any element with data-confirm
+      var trigger = e.target.closest('[data-confirm]');
+      if (trigger) {
+        e.preventDefault();
+        e.stopPropagation();
+        open(trigger.getAttribute('data-confirm'), trigger);
+        return;
+      }
+    });
+
+    confirmBtn.addEventListener('click', function () {
+      var el = pendingEl;
+      close();
+      if (!el) return;
+
+      // Forms: submit programmatically
+      var form = el.closest('form');
+      if (form) { form.submit(); return; }
+
+      // Links: navigate
+      if (el.tagName === 'A' && el.href) { window.location = el.href; return; }
+
+      // Buttons with htmx: trigger the request
+      if (window.htmx && el.hasAttribute('hx-post')) {
+        window.htmx.trigger(el, 'click');
+      }
+    });
+  })();
+</script>
 </body>
 </html>

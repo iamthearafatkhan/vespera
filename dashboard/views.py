@@ -1,4 +1,7 @@
 # dashboard/views.py
+from routines.models import ImportantDate
+from datetime import timedelta
+from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect
 from analytics_app.features import build_features_for_user
@@ -28,6 +31,12 @@ def home(request):
 
     risk = predict_dropout_risk(build_features_for_user(request.user))
     insights = generate_insights(request.user, limit=3)
+    today = timezone.localdate()
+    upcoming_dates = (
+        request.user.important_dates
+        .filter(date__gte=today, date__lte=today + timedelta(days=14))
+        .order_by("date")[:5]
+    )
 
     return render(request, "dashboard/home.html", {
         "study_labels": study_labels,

@@ -48,42 +48,41 @@
   {# ---- momentum / risk card ---- #}
   <div class="rounded-2xl ves-glass p-5">
     <div class="flex items-start justify-between gap-4">
-
-      <div>
-        <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Momentum</p>
-        <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
-          <span class="ves-pulse {% if risk.label == 'at risk' %}red{% elif risk.label == 'watch' %}amber{% else %}grey{% endif %}"></span>
-          {{ risk.label|capfirst }}
-        </p>
-        <p class="mt-1 text-xs text-[var(--ves-muted)]">
-          Chance you study tomorrow:
-          <strong class="text-[var(--ves-text)]">{{ risk.probability|floatformat:2 }}</strong>
-        </p>
-      </div>
-      {% if risk.model_auc %}
-  <p class="mt-0.5 text-[10px] text-[var(--ves-muted)] opacity-70">
-    Model ROC AUC: {{ risk.model_auc|floatformat:3 }} · calibrated
-  </p>
-{% endif %}
-
-      {% if risk.top_drivers %}
-  <div class="text-right text-xs">
-    <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">
-      {% if risk.label == 'on track' %}What's going well{% else %}What's pulling it down{% endif %}
+  <div>
+    <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Momentum</p>
+    <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
+      <span class="ves-pulse {% if risk.label == 'at risk' %}red{% elif risk.label == 'watch' %}amber{% else %}grey{% endif %}"></span>
+      {{ risk.label|capfirst }}
     </p>
-    <ul class="space-y-0.5">
-      {% for name, contrib in risk.top_drivers %}
-        <li class="text-[var(--ves-muted)]">
-          {{ name }}
-          <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
-            ({{ contrib|floatformat:2 }})
-          </span>
-        </li>
-      {% endfor %}
-    </ul>
+    <p class="mt-1 text-xs text-[var(--ves-muted)]">
+      Chance you study tomorrow:
+      <strong class="text-[var(--ves-text)]">{{ risk.probability|floatformat:2 }}</strong>
+    </p>
+    {% if risk.model_auc %}
+      <p class="mt-1 text-[10px] text-[var(--ves-muted)] opacity-70">
+        Model ROC AUC: {{ risk.model_auc|floatformat:3 }} · calibrated
+      </p>
+    {% endif %}
   </div>
-{% endif %}
+
+  {% if risk.top_drivers %}
+    <div class="text-right text-xs">
+      <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">
+        {% if risk.label == 'on track' %}What's going well{% else %}What's pulling it down{% endif %}
+      </p>
+      <ul class="space-y-0.5">
+        {% for name, contrib in risk.top_drivers %}
+          <li class="text-[var(--ves-muted)]">
+            {{ name }}
+            <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+              ({{ contrib|floatformat:2 }})
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
     </div>
+  {% endif %}
+</div>
 
     
     {% if risk.label == 'at risk' %}
@@ -96,6 +95,35 @@
   </p>
 {% endif %}
   </div>
+  {# ---- Upcoming reminders ---- #}
+{% if upcoming_dates %}
+  <section class="rounded-2xl ves-glass p-5">
+    <div class="mb-3 flex items-center justify-between">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Coming up</h2>
+      <a href="{% url 'routines:important_dates' %}" class="text-xs text-[var(--ves-accent)] hover:underline">Manage →</a>
+    </div>
+
+    <ul class="space-y-2">
+      {% for d in upcoming_dates %}
+        <li class="flex items-center gap-3 text-sm">
+          <span class="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg text-[9px] font-semibold leading-none
+            {% if d.urgency == 'critical' %}bg-red-500/15 text-red-400
+            {% elif d.urgency == 'soon' %}bg-amber-500/15 text-amber-400
+            {% else %}bg-[var(--ves-accent)]/15 text-[var(--ves-accent)]{% endif %}">
+            <span class="text-sm">{{ d.date|date:"j" }}</span>
+            <span class="uppercase">{{ d.date|date:"M" }}</span>
+          </span>
+          <div class="min-w-0">
+            <p class="font-medium truncate">{{ d.title }}</p>
+            <p class="text-[11px] text-[var(--ves-muted)]">
+              {{ d.get_kind_display }} · in {{ d.days_until }} day{{ d.days_until|pluralize }}
+            </p>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
 
   {# ---- Cross-domain insights ---- #}
   {% if insights %}

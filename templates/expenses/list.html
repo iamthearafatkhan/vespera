@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}Expenses · Vespera{% endblock %}
+<a href="{% url 'expenses:insights' %}"
+   class="rounded-xl border border-[var(--ves-border)] px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+  Trends →
+</a>
 
 {% block content %}
 <div class="mx-auto max-w-5xl">
