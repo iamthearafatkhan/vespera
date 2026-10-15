@@ -25,8 +25,9 @@
 </head>
 
 <body class="h-full" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  {% include "partials/loader.html" %}
 
-  {# Vanta lives here — ALWAYS rendered, on every page including login/signup/landing #}
+  {# Vanta + gradient mesh — always rendered, sits behind everything #}
   <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>
   <div class="ves-mesh" aria-hidden="true"></div>
 
@@ -43,6 +44,7 @@
     {% if user.is_authenticated %}{% include "partials/footer.html" %}{% endif %}
   </div>
 
+  {# ---------- Scripts ---------- #}
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/sidebar.js' %}"></script>
 
@@ -52,85 +54,108 @@
   <script src="{% static 'js/vanta-bg.js' %}"></script>
 
   <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  {# Page-specific scripts go here — ONE block, at the end #}
   {% block extra_js %}{% endblock %}
 
   {# ---------- Global confirm modal ---------- #}
-<div id="ves-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-  <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" data-modal-dismiss></div>
+  <div id="ves-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/60 backdrop-blur-sm" data-modal-dismiss></div>
 
-  <div class="relative w-full max-w-sm rounded-2xl ves-glass p-6 shadow-2xl">
-    <h3 id="ves-modal-title" class="text-lg font-semibold">Are you sure?</h3>
-    <p id="ves-modal-body" class="mt-2 text-sm text-[var(--ves-muted)]"></p>
+    <div class="relative w-full max-w-sm rounded-2xl ves-glass p-6 shadow-2xl">
+      <h3 id="ves-modal-title" class="text-lg font-semibold">Are you sure?</h3>
+      <p id="ves-modal-body" class="mt-2 text-sm text-[var(--ves-muted)]"></p>
 
-    <div class="mt-6 flex justify-end gap-2">
-      <button data-modal-dismiss
-              class="rounded-xl border border-[var(--ves-border)] px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
-        Cancel
-      </button>
-      <button id="ves-modal-confirm"
-              class="rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-red-500/20">
-        Confirm
-      </button>
+      <div class="mt-6 flex justify-end gap-2">
+        <button data-modal-dismiss
+                class="rounded-xl border border-[var(--ves-border)] px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+          Cancel
+        </button>
+        <button id="ves-modal-confirm"
+                class="rounded-xl bg-gradient-to-br from-red-500 to-rose-600 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-red-500/20">
+          Confirm
+        </button>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  // Generic confirm dialog — replaces ugly browser confirm()
-  // Usage: any element with [data-confirm="message"] intercepts its action.
-  (function () {
-    var modal = document.getElementById('ves-modal');
-    var titleEl = document.getElementById('ves-modal-title');
-    var bodyEl = document.getElementById('ves-modal-body');
-    var confirmBtn = document.getElementById('ves-modal-confirm');
-    if (!modal) return;
+  <script>
+    // Generic confirm dialog — replaces ugly browser confirm()
+    (function () {
+      var modal = document.getElementById('ves-modal');
+      var bodyEl = document.getElementById('ves-modal-body');
+      var confirmBtn = document.getElementById('ves-modal-confirm');
+      if (!modal) return;
 
-    var pendingEl = null;
+      var pendingEl = null;
 
-    function open(message, el) {
-      bodyEl.textContent = message;
-      pendingEl = el;
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-    function close() {
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-      pendingEl = null;
-    }
+      function open(message, el) {
+        bodyEl.textContent = message;
+        pendingEl = el;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      }
+      function close() {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        pendingEl = null;
+      }
 
-    document.addEventListener('click', function (e) {
-      // dismiss
-      if (e.target.closest('[data-modal-dismiss]')) { close(); return; }
+      document.addEventListener('click', function (e) {
+        if (e.target.closest('[data-modal-dismiss]')) { close(); return; }
+        var trigger = e.target.closest('[data-confirm]');
+        if (trigger) {
+          e.preventDefault();
+          e.stopPropagation();
+          open(trigger.getAttribute('data-confirm'), trigger);
+          return;
+        }
+      });
 
-      // open — any element with data-confirm
-      var trigger = e.target.closest('[data-confirm]');
-      if (trigger) {
-        e.preventDefault();
-        e.stopPropagation();
-        open(trigger.getAttribute('data-confirm'), trigger);
+      confirmBtn.addEventListener('click', function () {
+        var el = pendingEl;
+        close();
+        if (!el) return;
+        var form = el.closest('form');
+        if (form) { form.submit(); return; }
+        if (el.tagName === 'A' && el.href) { window.location = el.href; return; }
+        if (window.htmx && el.hasAttribute('hx-post')) {
+          window.htmx.trigger(el, 'click');
+        }
+      });
+    })();
+  </script>
+
+  {# ---------- Loader hide ---------- #}
+  <script>
+    (function () {
+      var loader = document.getElementById('ves-loader');
+      if (!loader) {
+        document.documentElement.classList.add('ves-loaded');
         return;
       }
-    });
 
-    confirmBtn.addEventListener('click', function () {
-      var el = pendingEl;
-      close();
-      if (!el) return;
+      var startTime = Date.now();
+      var MIN_SHOW = 800;
 
-      // Forms: submit programmatically
-      var form = el.closest('form');
-      if (form) { form.submit(); return; }
-
-      // Links: navigate
-      if (el.tagName === 'A' && el.href) { window.location = el.href; return; }
-
-      // Buttons with htmx: trigger the request
-      if (window.htmx && el.hasAttribute('hx-post')) {
-        window.htmx.trigger(el, 'click');
+      function hide() {
+        var elapsed = Date.now() - startTime;
+        var delay = Math.max(0, MIN_SHOW - elapsed);
+        setTimeout(function () {
+          loader.classList.add('ves-loader-out');
+          // reveal the main content with a gentle rise
+          document.documentElement.classList.add('ves-loaded');
+          setTimeout(function () { loader.style.display = 'none'; }, 500);
+        }, delay);
       }
-    });
-  })();
-</script>
+
+      if (document.readyState === 'complete') {
+        hide();
+      } else {
+        window.addEventListener('load', hide);
+        setTimeout(hide, 5000);   // safety net
+      }
+    })();
+  </script>
 </body>
 </html>

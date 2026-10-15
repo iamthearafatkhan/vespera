@@ -621,3 +621,246 @@ select option {
     animation: none !important;
   }
 }
+
+/* ================================================================
+   LOADING OVERLAY — Vespera branded stopwatch spinner
+   ================================================================ */
+
+#ves-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  background: var(--ves-bg);
+  transition: opacity .45s ease, visibility .45s ease;
+}
+
+#ves-loader.ves-loader-out {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.ves-loader-svg {
+  width: 104px;
+  height: 104px;
+  overflow: visible;
+  animation: ves-l-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes ves-l-glow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgba(88, 164, 176, .25));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 18px rgba(88, 164, 176, .55));
+  }
+}
+
+/* ---- rotating arc ---- */
+.ves-l-arc {
+  transform-origin: 32px 37px;
+  /* two animations: spin continuously + length pulse */
+  animation:
+    ves-l-spin 1.4s linear infinite,
+    ves-l-dash 2.2s ease-in-out infinite;
+}
+
+@keyframes ves-l-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ves-l-dash {
+
+  0%,
+  100% {
+    stroke-dasharray: 20 118;
+  }
+
+  50% {
+    stroke-dasharray: 50 88;
+  }
+}
+
+/* ---- staged fade-ins ---- */
+.ves-l-crown,
+.ves-l-ring-bg,
+.ves-l-ticks {
+  opacity: 0;
+  animation: ves-l-fade .6s .05s ease-out forwards;
+}
+
+.ves-l-inner {
+  opacity: 0;
+  transform-origin: 32px 37px;
+  animation: ves-l-pop .7s .5s cubic-bezier(.34, 1.56, .64, 1) forwards;
+}
+
+.ves-l-leaf {
+  opacity: 0;
+  transform-origin: 52px 47px;
+  animation:
+    ves-l-leaf-pop .8s .9s cubic-bezier(.34, 1.56, .64, 1) forwards,
+    ves-l-leaf-breathe 2.6s 1.8s ease-in-out infinite;
+}
+
+@keyframes ves-l-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ves-l-pop {
+  0% {
+    opacity: 0;
+    transform: scale(.55);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ves-l-leaf-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(-120deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes ves-l-leaf-breathe {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.14);
+  }
+}
+
+/* ---- text ---- */
+.ves-loader-text {
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .38em;
+  text-transform: uppercase;
+  color: var(--ves-muted);
+  opacity: 0;
+  animation:
+    ves-l-fade .6s .3s ease-out forwards,
+    ves-l-text-pulse 1.8s 1.2s ease-in-out infinite;
+  padding-left: .38em;
+  /* optical centering for the letter-spacing */
+}
+
+@keyframes ves-l-text-pulse {
+
+  0%,
+  100% {
+    opacity: .55;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ---- reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  .ves-loader-svg {
+    animation: none;
+    filter: drop-shadow(0 0 10px rgba(88, 164, 176, .4));
+  }
+
+  .ves-l-arc {
+    animation: ves-l-spin 3s linear infinite;
+  }
+
+  .ves-l-crown,
+  .ves-l-ring-bg,
+  .ves-l-ticks {
+    animation: ves-l-fade .3s .05s ease-out forwards;
+  }
+
+  .ves-l-inner {
+    animation: ves-l-fade .3s .1s ease-out forwards;
+  }
+
+  .ves-l-leaf {
+    animation: ves-l-fade .3s .15s ease-out forwards;
+  }
+
+  .ves-loader-text {
+    animation: ves-l-fade .3s .2s ease-out forwards;
+  }
+}
+
+/* ================================================================
+   POST-LOADER ENTRANCE
+   When the loader hides, `html.ves-loaded` is added and the main
+   content rises in gently instead of snapping into place.
+   ================================================================ */
+
+@media (prefers-reduced-motion: no-preference) {
+  html:not(.ves-loaded) main {
+    opacity: 0;
+  }
+
+  html.ves-loaded main {
+    animation: ves-content-in .7s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  html:not(.ves-loaded) .md\:pl-64>.sticky {
+    opacity: 0;
+  }
+
+  html.ves-loaded .md\:pl-64>.sticky {
+    animation: ves-content-in .7s .1s cubic-bezier(.22, .61, .36, 1) both;
+  }
+}
+
+@keyframes ves-content-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  html:not(.ves-loaded) main,
+  html:not(.ves-loaded) .md\:pl-64>.sticky {
+    opacity: 1;
+  }
+}

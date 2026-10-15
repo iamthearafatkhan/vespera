@@ -1,0 +1,44 @@
+{# templates/partials/loader.html — Vespera branded loading overlay #}
+<div id="ves-loader" role="status" aria-live="polite" aria-label="Loading Vespera">
+  <svg class="ves-loader-svg" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+
+    {# crown / stopwatch button #}
+    <g class="ves-l-crown">
+      <circle cx="32" cy="4.6" r="2.1" fill="#58a4b0"/>
+      <path d="M26.8 8.4 H37.2 L35.2 13.6 H28.8 Z" fill="#58a4b0"/>
+    </g>
+
+    {# faded full ring in the background #}
+    <circle class="ves-l-ring-bg" cx="32" cy="37" r="22"
+            stroke="#58a4b0" stroke-width="3" fill="none" opacity="0.15"/>
+
+    {# tick marks #}
+    <g class="ves-l-ticks" stroke="#58a4b0" stroke-width="2.2" stroke-linecap="round" opacity="0.35">
+      <line x1="32" y1="16" x2="32" y2="20"/>
+      <line x1="32" y1="54" x2="32" y2="58"/>
+      <line x1="11" y1="37" x2="15" y2="37"/>
+      <line x1="49" y1="37" x2="53" y2="37"/>
+    </g>
+
+    {# rotating arc — the "loading" indicator #}
+    <circle class="ves-l-arc" cx="32" cy="37" r="22"
+            stroke="#58a4b0" stroke-width="3.5" fill="none"
+            stroke-linecap="round"
+            stroke-dasharray="34.55 103.68"/>
+
+    {# inner arrowhead + V — pop in #}
+    <g class="ves-l-inner">
+      <path d="M23.5 23 L32 34 L40.5 23 Z" fill="#58a4b0"/>
+      <path d="M22 40.5 L32 50.5 L42 40.5" stroke="#58a4b0" stroke-width="3.2"
+            stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    </g>
+
+    {# leaf — pops in last, then breathes #}
+    <path class="ves-l-leaf"
+          d="M47 46 Q54.5 41 58 47 Q54.5 54 48 52 Q46 49 47 46 Z"
+          fill="#7cb342"/>
+
+  </svg>
+
+  <div class="ves-loader-text">Vespera</div>
+</div>

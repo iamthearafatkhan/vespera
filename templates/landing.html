@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="{% static 'css/vespera.css' %}" />
 
   <style>
-    /* Landing-only animations — kept in-file for portability */
+    /* ---- landing entrance animations ---- */
     @keyframes land-in    { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
     @keyframes land-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
     @keyframes land-shine { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
@@ -56,13 +56,31 @@
       border-color: color-mix(in oklab, var(--ves-accent) 40%, transparent);
     }
 
+    /* ---- staggered feature cards ---- */
+    .land-feature:nth-child(1) { animation: land-in .7s .5s cubic-bezier(.22,.61,.36,1) both; }
+    .land-feature:nth-child(2) { animation: land-in .7s .62s cubic-bezier(.22,.61,.36,1) both; }
+    .land-feature:nth-child(3) { animation: land-in .7s .74s cubic-bezier(.22,.61,.36,1) both; }
+
+    /* ---- hero card progress fill animation ---- */
+    .land-float .ves-progress > span {
+      animation: land-bar 1.4s .4s cubic-bezier(.22,.61,.36,1) both;
+    }
+    @keyframes land-bar {
+      from { transform: scaleX(0); transform-origin: left; }
+      to   { transform: scaleX(1); transform-origin: left; }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-      .land-fade, .land-fade-2, .land-fade-3, .land-fade-4, .land-float, .land-gradient { animation: none !important; }
+      .land-fade, .land-fade-2, .land-fade-3, .land-fade-4,
+      .land-float, .land-gradient, .land-feature,
+      .land-float .ves-progress > span { animation: none !important; }
     }
   </style>
 </head>
 
 <body class="h-full overflow-x-hidden">
+  {% include "partials/loader.html" %}
+
   <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>
   <div class="ves-mesh" aria-hidden="true"></div>
 
@@ -76,11 +94,9 @@
       </a>
 
       <nav class="flex items-center gap-2 text-sm">
-
-          {# theme toggle #}
         <button id="theme-toggle"
-            class="rounded-xl p-2 hover:bg-black/5 dark:hover:bg-white/5"
-            aria-label="Toggle theme">
+                class="rounded-xl p-2 hover:bg-black/5 dark:hover:bg-white/5"
+                aria-label="Toggle theme">
           <svg class="hidden dark:block" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="4"/>
             <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>
@@ -91,12 +107,12 @@
         </button>
 
         <a href="{% url 'accounts:login' %}"
-          class="rounded-xl px-4 py-2 text-[var(--ves-muted)] hover:text-[var(--ves-text)] hover:bg-black/5 dark:hover:bg-white/5">
-            Log in
+           class="rounded-xl px-4 py-2 text-[var(--ves-muted)] hover:text-[var(--ves-text)] hover:bg-black/5 dark:hover:bg-white/5">
+          Log in
         </a>
         <a href="{% url 'accounts:signup' %}"
-          class="land-cta rounded-xl px-4 py-2 font-medium text-white">
-            Get started
+           class="land-cta rounded-xl px-4 py-2 font-medium text-white">
+          Get started
         </a>
       </nav>
     </header>
@@ -217,7 +233,6 @@
     </section>
 
     {# ---------- footer ---------- #}
-        {# ---------- footer ---------- #}
     <footer class="mt-auto border-t border-[var(--ves-border)] pt-6 pb-2 text-xs text-[var(--ves-muted)]">
       <div class="flex flex-col items-center justify-between gap-3 sm:flex-row">
         <p class="text-xs">
@@ -225,8 +240,6 @@
         </p>
 
         <div class="flex items-center gap-4">
-
-          {# LinkedIn #}
           <a href="https://linkedin.com/in/iamthearafatkhan" target="_blank" rel="noopener"
              aria-label="LinkedIn"
              class="transition hover:text-[var(--ves-text)] hover:-translate-y-0.5">
@@ -235,7 +248,6 @@
             </svg>
           </a>
 
-          {# GitHub #}
           <a href="https://github.com/iamthearafatkhan" target="_blank" rel="noopener"
              aria-label="GitHub"
              class="transition hover:text-[var(--ves-text)] hover:-translate-y-0.5">
@@ -244,7 +256,6 @@
             </svg>
           </a>
 
-          {# Personal site — the AK logo image #}
           <a href="https://arafatkhan.vercel.app" target="_blank" rel="noopener"
              aria-label="arafatkhan.vercel.app"
              class="transition hover:opacity-80 hover:-translate-y-0.5">
@@ -254,10 +265,32 @@
       </div>
     </footer>
 
+  </div>
+
+  {# ---------- Scripts ---------- #}
+  <script src="{% static 'js/theme.js' %}"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.net.min.js"></script>
   <script src="{% static 'js/vanta-bg.js' %}"></script>
-  <script src="{% static 'js/theme.js' %}"></script>
 
+  {# ---------- Loader hide ---------- #}
+  <script>
+    (function () {
+      var loader = document.getElementById('ves-loader');
+      if (!loader) return;
+      var startTime = Date.now();
+      var MIN_SHOW = 800;
+      function hide() {
+        var elapsed = Date.now() - startTime;
+        var delay = Math.max(0, MIN_SHOW - elapsed);
+        setTimeout(function () {
+          loader.classList.add('ves-loader-out');
+          setTimeout(function () { loader.style.display = 'none'; }, 500);
+        }, delay);
+      }
+      if (document.readyState === 'complete') { hide(); }
+      else { window.addEventListener('load', hide); setTimeout(hide, 5000); }
+    })();
+  </script>
 </body>
 </html>
