@@ -10,6 +10,26 @@ class Course(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="courses")
     title = models.CharField(max_length=200)
     description = models.TextField(blank=True)
+        # ---- new fields ----
+    PLATFORM_CHOICES = [
+        ("",             "— No platform —"),
+        ("udemy",        "Udemy"),
+        ("coursera",     "Coursera"),
+        ("edx",          "edX"),
+        ("youtube",      "YouTube"),
+        ("kaggle",       "Kaggle"),
+        ("datacamp",     "DataCamp"),
+        ("pluralsight",  "Pluralsight"),
+        ("udacity",      "Udacity"),
+        ("freecodecamp", "freeCodeCamp"),
+        ("book",         "Book"),
+        ("university",   "University"),
+        ("other",        "Other"),
+    ]
+    platform = models.CharField(
+        max_length=20, choices=PLATFORM_CHOICES, blank=True, default="",
+    )
+    course_url = models.URLField(blank=True, default="", max_length=500)
 
     # Store everything as minutes — simpler math, no hour/minute juggling.
     # 147h 11m → 8831

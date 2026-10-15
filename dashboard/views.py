@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from analytics_app.features import build_features_for_user
 from analytics_app.ml import predict_dropout_risk
-
+from analytics_app.insights import generate_insights
 from . import services
 
 
@@ -22,6 +22,7 @@ def home(request):
     month_spend    = services.this_month_total(request.user)
     week_study     = sum(study_values[-7:])   # minutes in last 7 days
     risk = predict_dropout_risk(build_features_for_user(request.user))
+    insights = generate_insights(request.user, limit=3)
 
     return render(request, "dashboard/home.html", {
         # charts (JSON-safe lists)
@@ -44,5 +45,6 @@ def home(request):
             "week_study_hours": round(week_study / 60, 1),
         },
         "risk": risk,
+        "insights": insights,
         
     })

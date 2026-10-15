@@ -5,14 +5,16 @@ from .models import Course, StudySession
 
 
 class CourseForm(forms.ModelForm):
-    """Create / edit a course. User enters hours + minutes separately."""
-
     hours = forms.IntegerField(min_value=0, max_value=2000, initial=0, label="Hours")
     minutes = forms.IntegerField(min_value=0, max_value=59, initial=0, label="Minutes")
 
     class Meta:
         model = Course
-        fields = ["title", "description", "color"]
+        fields = ["title", "description", "platform", "course_url", "color"]
+        widgets = {
+            "course_url": forms.URLInput(attrs={"placeholder": "https://…"}),
+            "description": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

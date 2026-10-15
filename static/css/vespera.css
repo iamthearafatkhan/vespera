@@ -79,13 +79,18 @@ select option {
   color: #d8dbe2;
 }
 
-/* ---------- Ambient mesh (pacific → powder gradient) ---------- */
-.ves-mesh {
+/* ---- Ambient backgrounds (Vanta + mesh) ---- */
+#vanta-bg {
   position: fixed;
   inset: 0;
-  z-index: -1;
-  overflow: hidden;
+  z-index: -10;
   pointer-events: none;
+}
+
+/* ---------- Ambient mesh (pacific → powder gradient) ---------- */
+/* Hide the CSS gradient mesh — Vanta NET now provides the ambient layer */
+.ves-mesh {
+  display: none;
 }
 
 .ves-mesh::before,

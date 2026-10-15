@@ -21,6 +21,25 @@
   </div>
 
   <h1 class="mb-6 text-3xl font-semibold tracking-tight">{{ course.title }}</h1>
+  {# platform chip + course link #}
+  <div class="mb-6 flex flex-wrap items-center gap-3 text-sm">
+    {% if course.platform %}
+      <span class="rounded-full border border-[var(--ves-border)] px-3 py-1 text-xs uppercase tracking-wider text-[var(--ves-muted)]">
+        {{ course.get_platform_display }}
+      </span>
+    {% endif %}
+    {% if course.course_url %}
+      <a href="{{ course.course_url }}" target="_blank" rel="noopener"
+        class="inline-flex items-center gap-1.5 text-[var(--ves-accent)] hover:underline">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+          <polyline points="15 3 21 3 21 9"/>
+          <line x1="10" y1="14" x2="21" y2="3"/>
+        </svg>
+        Open course
+      </a>
+    {% endif %}
+  </div>
 
   {# forecast + history area — HTMX swaps this in place after logging #}
   <div id="forecast-and-history" class="mb-4" hx-target="this" hx-swap="innerHTML">

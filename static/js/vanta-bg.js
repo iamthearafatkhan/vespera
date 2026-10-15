@@ -1,39 +1,33 @@
 // static/js/vanta-bg.js
-// Vespera — Vanta DOTS background, theme-aware.
-//
-// Vanta reads colors once at init, so when the user toggles theme we destroy
-// and re-create the effect. That's cheap (~50ms) and gives us a clean
-// transition because the canvas fades via CSS opacity.
+// Vespera — Vanta NET background, theme-aware.
+// NET renders its own opaque canvas (needed for its blending math), so we
+// fade it in via CSS opacity and skip the mesh layer.
 
 (function () {
-    // ---- guard: no WebGL, no Vanta, or reduced-motion → skip entirely ----
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const isSmallScreen = window.innerWidth < 480;
-    if (prefersReduced || typeof window.VANTA === 'undefined') {
-        return;
-    }
+    if (prefersReduced || typeof window.VANTA === 'undefined') return;
 
     const el = document.getElementById('vanta-bg');
     if (!el) return;
 
+    const isSmallScreen = window.innerWidth < 640;
     let effect = null;
 
-    // Read theme colors from our CSS variables so the effect matches the palette
     function readTheme() {
-        const css = getComputedStyle(document.documentElement);
         const isDark = document.documentElement.classList.contains('dark');
         return {
-            accent: css.getPropertyValue('--ves-accent').trim() || '#58a4b0',
-            accent2: css.getPropertyValue('--ves-accent-2').trim() || '#a9bcd0',
-            // canvas background — transparent so the CSS mesh behind shows through
+            // NET likes its own solid backdrop — we use our theme bg colors
             bg: isDark ? '#1b1b1e' : '#f4f5f8',
-            isDark: isDark,
+            // dots stay pacific blue in both themes
+            color: '#58a4b0',
+            // slight brightness nudge so dots pop on light bg
+            isDark,
         };
     }
 
     function start() {
         const t = readTheme();
-        effect = window.VANTA.DOTS({
+        effect = window.VANTA.NET({
             el: '#vanta-bg',
             mouseControls: true,
             touchControls: true,
@@ -41,60 +35,44 @@
             minHeight: 200,
             minWidth: 200,
 
-            // Scale — smaller on mobile to save battery
+            // scale down on mobile for battery
             scale: 1.0,
-            scaleMobile: 0.55,
+            scaleMobile: 0.6,
 
-            // Colors straight from our palette
-            color: t.accent,       // dot color (pacific blue in both themes)
-            color2: t.accent2,      // line color (powder blue)
-
-            // Make the canvas transparent so the CSS mesh blurs through underneath
+            // colors
+            color: t.color,
             backgroundColor: t.bg,
-            backgroundAlpha: 0,
 
-            // Density + size — tuned to feel "premium", not "screen saver"
-            size: 2.2,
-            spacing: 55,
-
-            // Constellation lines on, but sparse
-            showLines: true,
+            // density + spread — tuned to feel calm, not busy
+            points: isSmallScreen ? 6 : 9,   // grid side length (points²)
+            maxDistance: 22,                       // line length threshold
+            spacing: 18,                       // distance between grid cells
+            showDots: true,                     // little glowing nodes
         });
 
-        // Fade in — prevents a hard pop on first load
+        // fade the whole canvas in — prevents a hard pop on first paint
         el.style.opacity = '0';
-        el.style.transition = 'opacity .8s ease';
+        el.style.transition = 'opacity .9s ease';
         requestAnimationFrame(() => { el.style.opacity = '1'; });
     }
 
     function stop() {
-        if (effect) {
-            effect.destroy();
-            effect = null;
-        }
+        if (effect) { effect.destroy(); effect = null; }
     }
 
-    // ---- go ----
     start();
 
-    // Re-init when theme class flips on <html>
+    // re-init when theme flips
     const observer = new MutationObserver((mutations) => {
         for (const m of mutations) {
-            if (m.attributeName === 'class') {
-                stop();
-                start();
-                break;
-            }
+            if (m.attributeName === 'class') { stop(); start(); break; }
         }
     });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
 
-    // Pause the animation when the tab is hidden — saves CPU on laptops
+    // pause when tab is hidden — saves CPU
     document.addEventListener('visibilitychange', () => {
-        if (document.hidden) {
-            stop();
-        } else {
-            start();
-        }
+        if (document.hidden) stop();
+        else start();
     });
 })();

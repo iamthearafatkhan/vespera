@@ -8,6 +8,7 @@ from . import services
 @staff_member_required
 def metrics_home(request):
     """Staff-only dashboard. Not linked from the sidebar — go to /staff/."""
+
     return render(request, "analytics_app/metrics.html", {
         "activity": services.user_activity_breakdown(),
         "signup_labels": services.daily_signups(30)[0],
@@ -16,3 +17,4 @@ def metrics_home(request):
         "window_active": services.ACTIVE_WINDOW_DAYS,
         "window_idle": services.IDLE_WINDOW_DAYS,
     })
+
