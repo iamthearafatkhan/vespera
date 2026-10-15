@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Metrics · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-5xl space-y-5">
+
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight">Metrics</h1>
+    <p class="mt-1 text-sm text-[var(--ves-muted)]">
+      Staff view — how the product is actually being used.
+    </p>
+  </div>
+
+  {# ---- activity cards ---- #}
+  <div class="grid grid-cols-2 gap-3 md:grid-cols-5">
+    <div class="rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Total</p>
+      <p class="mt-1 text-2xl font-semibold">{{ activity.total }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-4 ves-glow-ring">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Active · {{ window_active }}d</p>
+      <p class="mt-1 text-2xl font-semibold text-emerald-500">{{ activity.active }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Recent</p>
+      <p class="mt-1 text-2xl font-semibold">{{ activity.recent }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Idle · {{ window_idle }}d+</p>
+      <p class="mt-1 text-2xl font-semibold text-amber-500">{{ activity.idle }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-4">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Never</p>
+      <p class="mt-1 text-2xl font-semibold text-[var(--ves-muted)]">{{ activity.never }}</p>
+    </div>
+  </div>
+
+  {# ---- engagement per user ---- #}
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <div class="rounded-2xl ves-glass p-5">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Courses / user</p>
+      <p class="mt-1 text-2xl font-semibold">{{ content.courses_per_user }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-5">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Habits / user</p>
+      <p class="mt-1 text-2xl font-semibold">{{ content.habits_per_user }}</p>
+    </div>
+    <div class="rounded-2xl ves-glass p-5">
+      <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Expenses / user</p>
+      <p class="mt-1 text-2xl font-semibold">{{ content.expenses_per_user }}</p>
+    </div>
+  </div>
+
+  {# ---- signups chart ---- #}
+  <div class="rounded-2xl ves-glass p-5">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Signups · last 30 days</h3>
+    <canvas id="signupsChart" height="100"></canvas>
+  </div>
+
+  <div class="rounded-2xl ves-glass p-5 text-sm text-[var(--ves-muted)]">
+    <strong class="text-[var(--ves-text)]">When to upgrade:</strong>
+    when <em>Active</em> stays above 500 for a week, or <em>Total</em> passes ~5,000.
+    Before that, the alwaysdata free tier is fine.
+  </div>
+</div>
+
+{{ signup_labels|json_script:"signup-labels" }}
+{{ signup_values|json_script:"signup-values" }}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const read = (id) => JSON.parse(document.getElementById(id).textContent);
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--ves-accent").trim() || "#58a4b0";
+
+  new Chart(document.getElementById("signupsChart"), {
+    type: "line",
+    data: {
+      labels: read("signup-labels"),
+      datasets: [{
+        data: read("signup-values"),
+        borderColor: accent,
+        backgroundColor: accent + "33",
+        borderWidth: 2,
+        fill: true,
+        tension: .35,
+        pointRadius: 0,
+      }],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { maxTicksLimit: 10 } },
+        y: { grid: { color: "rgba(128,128,128,.15)" }, border: { display: false }, beginAtZero: true },
+      },
+    },
+  });
+})();
+</script>
+{% endblock %}

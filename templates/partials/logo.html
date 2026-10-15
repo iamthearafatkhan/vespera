@@ -1,6 +1,5 @@
-{# templates/partials/logo.html — reusable SVG mark
-   Pass `size` (px) from the parent, e.g. {% include "partials/logo.html" with size=34 %} #}
 {% load static %}
+{# Vespera logo mark — reusable SVG. Parent passes `size` in px. #}
 <svg class="ves-logo" width="{{ size|default:32 }}" height="{{ size|default:32 }}"
      viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg"
      role="img" aria-label="Vespera">
@@ -28,8 +27,8 @@
         stroke="currentColor" stroke-width="3.2"
         stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 
-  {# --- leaf (nature + growth accent) --- #}
-  <path d="M47 46 Q54.5 41 58 47 Q54.5 54 48 52 Q46 49 47 46 Z" fill="#7cb342"/>
-  <path d="M48 47.5 Q52 48.5 54 51" stroke="#4d7c22" stroke-width="0.8"
-        fill="none" stroke-linecap="round"/>
+  {# --- new dual leaves (nature + growth accent) --- #}
+  <g transform="translate(42, 38) scale(0.16)">
+    <path fill="#01a437" d="M59.07,110.77C110.92,105,139.6,71.12,112.44,0c-21.29,14.9-50.39,24.6-65,44.55C57,52.94,64.89,62.23,67.08,74.37c13.19-16.08,27.63-30.72,35.23-47-7.79,39.07-20,53.84-38.78,73.81a93.64,93.64,0,0,1-4.46,9.62Zm-14.9,4C4,105-15.18,76.09,14.27,24.75c23.8,22.92,65.79,37.48,38.39,85.86a27.08,27.08,0,0,1-1.83,2.93C45.9,89.62,26.21,70.69,20.43,50.61,21.77,83.42,31.23,93,45.88,114.86c-.57,0-1.14-.06-1.71-.13Z"/>
+  </g>
 </svg>

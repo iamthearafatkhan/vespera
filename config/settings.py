@@ -27,6 +27,8 @@ INSTALLED_APPS = [
     "courses",
     'expenses',
     'routines',
+    "dashboard",
+    "analytics_app",
 ]
 
 MIDDLEWARE = [

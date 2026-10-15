@@ -8,9 +8,10 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("accounts/", include("accounts.urls")),
     path("courses/", include("courses.urls")),
-    path("expenses/", include("expenses.urls")),   # ← new
-    path("routines/", include("routines.urls")),   # ← new
-    path("", include("accounts.home_urls")),
+    path("expenses/", include("expenses.urls")),
+    path("routines/", include("routines.urls")),
+    path("", include("dashboard.urls")),
+    path("staff/", include("analytics_app.urls")),
 ]
 
 # serve uploaded files in dev only
