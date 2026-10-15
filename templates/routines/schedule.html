@@ -4,12 +4,14 @@
 {% block content %}
 <div class="mx-auto max-w-6xl space-y-5">
 
+  {# ---- header with download buttons ---- #}
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <h1 class="text-3xl font-semibold tracking-tight">Class schedule</h1>
       <p class="mt-1 text-sm text-[var(--ves-muted)]">Weekly timetable — add classes once, see them every week.</p>
     </div>
-    <div class="flex gap-2">
+
+    <div class="flex flex-wrap gap-2">
       <a href="{% url 'routines:board' %}"
          class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
         ← Habits
@@ -18,6 +20,14 @@
          class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
         Important dates →
       </a>
+      <button type="button" id="btn-png"
+              class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        ⬇ PNG
+      </button>
+      <button type="button" id="btn-pdf"
+              class="rounded-xl border border-[var(--ves-border)] px-4 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        ⬇ PDF
+      </button>
     </div>
   </div>
 
@@ -91,8 +101,9 @@
     </div>
   </form>
 
-  {# ---- weekly grid ---- #}
-  <div class="grid grid-cols-1 gap-3 md:grid-cols-7">
+  {# ---- weekly grid — id="schedule-grid" is REQUIRED for downloads ---- #}
+  <div id="schedule-grid" class="grid grid-cols-1 gap-3 md:grid-cols-7 rounded-2xl p-4"
+       style="background: var(--ves-bg);">
     {% for day in week %}
       <div class="rounded-2xl ves-glass p-4">
         <p class="mb-3 text-xs font-semibold uppercase tracking-wider text-[var(--ves-muted)]">{{ day.name }}</p>
@@ -111,13 +122,13 @@
                     </p>
                     {% if e.room %}<p class="mt-0.5 text-[10px] text-[var(--ves-muted)]">Room {{ e.room }}</p>{% endif %}
                   </div>
-                  <form method="post" action="{% url 'routines:class_delete' e.pk %}">
+                  <form method="post" action="{% url 'routines:class_delete' e.pk %}" data-no-capture>
                     {% csrf_token %}
                     <button class="text-[10px] text-[var(--ves-muted)] hover:text-red-400"
                             data-confirm="Delete this class?">×</button>
                   </form>
                 </div>
-              </article>
+              </li>
             {% endfor %}
           </ul>
         {% endif %}
@@ -126,4 +137,59 @@
   </div>
 
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+(function () {
+  function capture() {
+    const el = document.getElementById("schedule-grid");
+    if (!el) { console.error("schedule-grid not found"); return null; }
+
+    // hide the delete forms so they don't appear in the export
+    const deletables = el.querySelectorAll("[data-no-capture]");
+    deletables.forEach(n => n.style.visibility = "hidden");
+
+    return html2canvas(el, {
+      backgroundColor: getComputedStyle(document.documentElement).getPropertyValue("--ves-bg").trim() || "#1b1b1e",
+      scale: 2,
+      useCORS: true,
+      logging: false,
+    }).then(canvas => {
+      deletables.forEach(n => n.style.visibility = "");
+      return canvas;
+    });
+  }
+
+  function filename(ext) {
+    const d = new Date();
+    const s = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    return `vespera-schedule-${s}.${ext}`;
+  }
+
+  document.getElementById("btn-png")?.addEventListener("click", function () {
+    const p = capture(); if (!p) return;
+    p.then(canvas => {
+      const a = document.createElement("a");
+      a.download = filename("png");
+      a.href = canvas.toDataURL("image/png");
+      a.click();
+    });
+  });
+
+  document.getElementById("btn-pdf")?.addEventListener("click", function () {
+    const p = capture(); if (!p) return;
+    p.then(canvas => {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({
+        orientation: canvas.width > canvas.height ? "landscape" : "portrait",
+        unit: "px",
+        format: [canvas.width, canvas.height],
+      });
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, canvas.width, canvas.height);
+      pdf.save(filename("pdf"));
+    });
+  });
+})();
+</script>
 {% endblock %}

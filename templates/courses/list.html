@@ -32,71 +32,68 @@
         {% with hex=course.color_hex %}
 
         <a href="{% url 'courses:detail' course.pk %}"
-           class="ves-lift group relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover"
-           style="box-shadow: inset 0 0 0 1px {{ hex }}55;">
+           class="relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover transition-all duration-300 hover:-translate-y-1"
+           style="border-left: 8px solid {{ hex }}; box-shadow: 0 8px 32px -12px {{ hex }}66;">
 
-          {# BOLD 8px solid left bar — the course color #}
-          <span class="absolute inset-y-0 left-0 w-2"
-                style="background-color: {{ hex }};"
+          {# tinted background wash #}
+          <span class="pointer-events-none absolute inset-0 opacity-20"
+                style="background: linear-gradient(135deg, {{ hex }} 0%, transparent 55%);"
                 aria-hidden="true"></span>
 
-          {# tinted wash over the whole card #}
-          <span class="pointer-events-none absolute inset-0"
-                style="background: linear-gradient(135deg, {{ hex }}22 0%, transparent 65%);"
-                aria-hidden="true"></span>
-
-          <div class="relative pl-8 pr-5 py-5">
+          <div class="relative px-6 py-5">
 
             <div class="mb-3 flex items-start justify-between gap-3">
               <div class="min-w-0">
-                <h3 class="flex items-center gap-3 truncate text-lg font-semibold leading-tight">
-                  {# big glowing dot #}
-                  <span class="inline-block h-4 w-4 shrink-0 rounded-full ring-2 ring-white/10"
+                <h3 class="flex items-center gap-3 text-lg font-bold leading-tight">
+                  <span class="inline-block h-5 w-5 shrink-0 rounded-full"
                         style="background-color: {{ hex }};
-                               box-shadow: 0 0 14px {{ hex }}, 0 0 28px {{ hex }}80;">
+                               box-shadow: 0 0 0 4px {{ hex }}33, 0 0 24px {{ hex }};">
                   </span>
-                  <span style="color: {{ hex }};">{{ course.title }}</span>
+                  <span class="truncate" style="color: {{ hex }};">{{ course.title }}</span>
                 </h3>
                 {% if course.platform %}
-                  <p class="mt-1.5 pl-7 text-[11px] uppercase tracking-wider text-[var(--ves-muted)]">
+                  <p class="mt-1.5 pl-8 text-[11px] uppercase tracking-widest text-[var(--ves-muted)]">
                     {{ course.get_platform_display }}
                   </p>
                 {% endif %}
               </div>
 
               {% if f.is_complete %}
-                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                <span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold"
                       style="background-color: {{ hex }}33; color: {{ hex }};">
                   ✓ Done
                 </span>
               {% else %}
-                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                <span class="shrink-0 rounded-full px-3 py-1 text-xs font-bold"
                       style="background-color: {{ hex }}33; color: {{ hex }};">
                   {{ f.progress_pct|floatformat:1 }}%
                 </span>
               {% endif %}
             </div>
 
-            {# colored progress bar #}
-            <div class="relative mb-3 h-2.5 w-full overflow-hidden rounded-full bg-black/25 dark:bg-black/50">
-              <span class="block h-full rounded-full transition-all duration-500"
-                    style="width: {{ f.progress_pct }}%;
+            {# progress bar — with colored fill; even tiny progress is visible #}
+            <div class="relative mb-4 h-3 w-full overflow-hidden rounded-full"
+                 style="background: rgba(0,0,0,0.4);">
+              <span class="block h-full rounded-full transition-all duration-700"
+                    style="width: {% if f.progress_pct < 2 %}4{% else %}{{ f.progress_pct }}{% endif %}%;
                            background-color: {{ hex }};
-                           box-shadow: 0 0 20px {{ hex }};">
+                           box-shadow: 0 0 24px {{ hex }};">
               </span>
             </div>
 
-            <div class="relative flex items-center justify-between text-xs text-[var(--ves-muted)]">
-              <span class="font-mono">{{ f.studied_minutes }} / {{ course.total_minutes }} min</span>
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-mono text-[var(--ves-muted)]">
+                {{ f.studied_minutes }} / {{ course.total_minutes }} min
+              </span>
               {% if f.is_complete %}
-                <span class="font-medium" style="color: {{ hex }};">🎉 Complete</span>
+                <span class="font-semibold" style="color: {{ hex }};">🎉 Complete</span>
               {% elif f.predicted_finish %}
-                <span class="flex items-center gap-2">
-                  <span class="ves-pulse"></span>
+                <span class="flex items-center gap-2 text-[var(--ves-muted)]">
+                  <span class="inline-block h-2 w-2 rounded-full" style="background-color: {{ hex }};"></span>
                   ETA {{ f.predicted_finish|date:"M j" }}
                 </span>
               {% else %}
-                <span class="italic">Log a few sessions to forecast</span>
+                <span class="italic text-[var(--ves-muted)]">Log a few sessions to forecast</span>
               {% endif %}
             </div>
           </div>

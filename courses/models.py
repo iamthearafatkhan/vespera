@@ -40,6 +40,19 @@ class Course(models.Model):
 
     is_archived = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    COLOR_HEX = {
+        "violet":  "#8b7bff",
+        "teal":    "#2ee7d6",
+        "emerald": "#10b981",
+        "amber":   "#f5a623",
+        "rose":    "#ef4444",
+        "slate":   "#64748b",
+    }
+
+    @property
+    def color_hex(self) -> str:
+        """Hex code for this course's accent colour (fallback: pacific blue)."""
+        return self.COLOR_HEX.get(self.color, "#58a4b0")
 
     class Meta:
         ordering = ["-created_at"]
