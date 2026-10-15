@@ -1,6 +1,3 @@
-from django.shortcuts import render
-
-# Create your views here.
 # courses/views.py
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,7 +7,6 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import CourseForm, StudySessionForm
 from .models import Course
-from .services import forecast_course
 from .services import forecast_course, simulate_course
 
 

@@ -38,7 +38,11 @@ def expense_list(request):
         occurred_at__date__lte=last,
     )
     total = month_qs.aggregate(s=Sum("amount"))["s"] or 0
-    by_category = month_qs.values("category").annotate(total=Sum("amount")).order_by("-total")
+    by_category = (
+        month_qs.values("category")
+        .annotate(total=Sum("amount"))
+        .order_by("-total")
+    )
 
     return render(request, "expenses/list.html", {
         "form": ExpenseForm(),
@@ -51,7 +55,7 @@ def expense_list(request):
 
 
 # ------------------------------------------------------------------
-# INSIGHTS / SAVINGS VIEW
+# SAVINGS / INSIGHTS
 # ------------------------------------------------------------------
 
 def _range_for(mode: str, anchor: date):
@@ -77,7 +81,7 @@ def _prev_range(start: date, end: date):
 
 @login_required
 def insights_view(request):
-    """Weekly / monthly savings view with historical bar chart."""
+    """Weekly / monthly savings view with budget + history."""
     today = timezone.localdate()
     mode = request.GET.get("mode", "month")
     if mode not in ("week", "month"):
@@ -86,7 +90,6 @@ def insights_view(request):
     start, end, label = _range_for(mode, today)
     p_start, p_end = _prev_range(start, end)
 
-    # this period
     this_qs = Expense.objects.filter(
         user=request.user,
         occurred_at__date__gte=start,
@@ -94,7 +97,6 @@ def insights_view(request):
     )
     this_total = this_qs.aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
 
-    # previous period
     last_qs = Expense.objects.filter(
         user=request.user,
         occurred_at__date__gte=p_start,
@@ -102,27 +104,25 @@ def insights_view(request):
     )
     last_total = last_qs.aggregate(s=Sum("amount"))["s"] or Decimal("0.00")
 
-    # ---- savings math ----
-    # Priority 1: if user set a budget, savings = budget - spend
-    # Priority 2: otherwise savings = previous period spend - this period spend
+    # ---- savings logic ----
     budget = MonthlyBudget.objects.filter(user=request.user).first()
     budget_for_period = None
+    savings_source = "comparison"
 
     if budget and budget.amount > 0:
-        # weekly budget = monthly / 4.333 (52 weeks / 12 months)
-        budget_for_period = budget.amount if mode == "month" else (budget.amount / Decimal("4.333"))
+        budget_for_period = (
+            budget.amount if mode == "month"
+            else (budget.amount / Decimal("4.333"))
+        )
         savings = budget_for_period - this_total
         savings_source = "budget"
     else:
         savings = last_total - this_total
-        savings_source = "comparison"
 
-    # percentage spent of budget / of last period
     spend_pct_of_target = None
     if budget_for_period and budget_for_period > 0:
         spend_pct_of_target = float(this_total / budget_for_period * 100)
 
-    # delta vs last period
     delta = this_total - last_total
     delta_pct = None
     if last_total > 0:
@@ -149,7 +149,7 @@ def insights_view(request):
         elif pct_per_day < -2:
             trend_label = "falling"
 
-    # ---- history for chart: last 8 periods ----
+    # ---- history bars ----
     trunc = TruncWeek("occurred_at") if mode == "week" else TruncMonth("occurred_at")
     history = list(reversed(list(
         Expense.objects
@@ -166,20 +166,23 @@ def insights_view(request):
     ]
     hist_values = [float(h["total"]) for h in history]
 
-    # ---- budget line for chart (per period) ----
     chart_budget = None
     if budget and budget.amount > 0:
         chart_budget = float(
-            budget.amount if mode == "month" else (budget.amount / Decimal("4.333"))
+            budget.amount if mode == "month"
+            else (budget.amount / Decimal("4.333"))
         )
 
-    # ---- category breakdown for this period ----
+    # ---- category breakdown ----
     by_category = list(
         this_qs.values("category")
         .annotate(total=Sum("amount"))
         .order_by("-total")
     )
-    cat_labels = [dict(Expense.CATEGORY_CHOICES).get(r["category"], r["category"]) for r in by_category]
+    cat_labels = [
+        dict(Expense.CATEGORY_CHOICES).get(r["category"], r["category"])
+        for r in by_category
+    ]
     cat_values = [float(r["total"]) for r in by_category]
 
     return render(request, "expenses/insights.html", {

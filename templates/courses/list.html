@@ -29,67 +29,80 @@
   {% else %}
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
       {% for course, f in rows %}
-        {# --cc is the course colour, used everywhere inside this card #}
+        {% with hex=course.color_hex %}
+
         <a href="{% url 'courses:detail' course.pk %}"
-           class="ves-lift group relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover p-5 pl-7"
-           style="--cc: {{ course.color_hex }};">
+           class="ves-lift group relative block overflow-hidden rounded-2xl ves-glass ves-glass-hover"
+           style="box-shadow: inset 0 0 0 1px {{ hex }}55;">
 
-          {# SOLID left stripe — 4px, always visible #}
-          <span class="absolute inset-y-0 left-0 w-1"
-                style="background: var(--cc);"
+          {# BOLD 8px solid left bar — the course color #}
+          <span class="absolute inset-y-0 left-0 w-2"
+                style="background-color: {{ hex }};"
                 aria-hidden="true"></span>
 
-          {# soft tint of the whole card background #}
-          <span class="pointer-events-none absolute inset-0 -z-10 opacity-10 transition-opacity duration-300 group-hover:opacity-20"
-                style="background: radial-gradient(circle at 0% 50%, var(--cc), transparent 65%);"
+          {# tinted wash over the whole card #}
+          <span class="pointer-events-none absolute inset-0"
+                style="background: linear-gradient(135deg, {{ hex }}22 0%, transparent 65%);"
                 aria-hidden="true"></span>
 
-          <div class="mb-3 flex items-start justify-between gap-3">
-            <div class="min-w-0">
-              <h3 class="flex items-center gap-2 truncate text-lg font-semibold leading-tight">
-                <span class="h-3 w-3 shrink-0 rounded-full"
-                      style="background: var(--cc); box-shadow: 0 0 10px var(--cc);"></span>
-                {{ course.title }}
-              </h3>
-              {% if course.platform %}
-                <p class="mt-1 pl-5 text-xs uppercase tracking-wider text-[var(--ves-muted)]">
-                  {{ course.get_platform_display }}
-                </p>
+          <div class="relative pl-8 pr-5 py-5">
+
+            <div class="mb-3 flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <h3 class="flex items-center gap-3 truncate text-lg font-semibold leading-tight">
+                  {# big glowing dot #}
+                  <span class="inline-block h-4 w-4 shrink-0 rounded-full ring-2 ring-white/10"
+                        style="background-color: {{ hex }};
+                               box-shadow: 0 0 14px {{ hex }}, 0 0 28px {{ hex }}80;">
+                  </span>
+                  <span style="color: {{ hex }};">{{ course.title }}</span>
+                </h3>
+                {% if course.platform %}
+                  <p class="mt-1.5 pl-7 text-[11px] uppercase tracking-wider text-[var(--ves-muted)]">
+                    {{ course.get_platform_display }}
+                  </p>
+                {% endif %}
+              </div>
+
+              {% if f.is_complete %}
+                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      style="background-color: {{ hex }}33; color: {{ hex }};">
+                  ✓ Done
+                </span>
+              {% else %}
+                <span class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+                      style="background-color: {{ hex }}33; color: {{ hex }};">
+                  {{ f.progress_pct|floatformat:1 }}%
+                </span>
               {% endif %}
             </div>
-            {% if f.is_complete %}
-              <span class="shrink-0 rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-500">Done</span>
-            {% else %}
-              <span class="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                    style="background: color-mix(in oklab, var(--cc) 18%, transparent); color: var(--cc);">
-                {{ f.progress_pct|floatformat:1 }}%
-              </span>
-            {% endif %}
-          </div>
 
-          {# progress bar — coloured, thicker, glows #}
-          <div class="relative mb-3 h-2.5 w-full overflow-hidden rounded-full bg-black/10 dark:bg-white/10">
-            <span class="block h-full rounded-full transition-all duration-500"
-                  style="width: {{ f.progress_pct }}%;
-                         background: linear-gradient(90deg, var(--cc), color-mix(in oklab, var(--cc) 55%, white));
-                         box-shadow: 0 0 16px -2px var(--cc);">
-            </span>
-          </div>
-
-          <div class="flex items-center justify-between text-xs text-[var(--ves-muted)]">
-            <span class="font-mono">{{ f.studied_minutes }} / {{ course.total_minutes }} min</span>
-            {% if f.is_complete %}
-              <span class="text-emerald-500">🎉 Complete</span>
-            {% elif f.predicted_finish %}
-              <span class="flex items-center gap-2">
-                <span class="ves-pulse {% if f.momentum == 'fading' %}amber{% elif f.momentum == 'stalled' %}red{% elif f.momentum == 'steady' %}grey{% endif %}"></span>
-                ETA {{ f.predicted_finish|date:"M j" }}
+            {# colored progress bar #}
+            <div class="relative mb-3 h-2.5 w-full overflow-hidden rounded-full bg-black/25 dark:bg-black/50">
+              <span class="block h-full rounded-full transition-all duration-500"
+                    style="width: {{ f.progress_pct }}%;
+                           background-color: {{ hex }};
+                           box-shadow: 0 0 20px {{ hex }};">
               </span>
-            {% else %}
-              <span class="italic">Log a few sessions to forecast</span>
-            {% endif %}
+            </div>
+
+            <div class="relative flex items-center justify-between text-xs text-[var(--ves-muted)]">
+              <span class="font-mono">{{ f.studied_minutes }} / {{ course.total_minutes }} min</span>
+              {% if f.is_complete %}
+                <span class="font-medium" style="color: {{ hex }};">🎉 Complete</span>
+              {% elif f.predicted_finish %}
+                <span class="flex items-center gap-2">
+                  <span class="ves-pulse"></span>
+                  ETA {{ f.predicted_finish|date:"M j" }}
+                </span>
+              {% else %}
+                <span class="italic">Log a few sessions to forecast</span>
+              {% endif %}
+            </div>
           </div>
         </a>
+
+        {% endwith %}
       {% endfor %}
     </div>
   {% endif %}
