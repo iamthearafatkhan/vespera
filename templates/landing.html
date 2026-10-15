@@ -1,0 +1,225 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vespera — track what matters</title>
+
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/vespera.svg' %}" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: "class" };</script>
+
+  <script>
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (saved === "dark" || (!saved && prefersDark)) document.documentElement.classList.add("dark");
+    })();
+  </script>
+
+  <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+  <link rel="stylesheet" href="{% static 'css/vespera.css' %}" />
+
+  <style>
+    /* Landing-only animations — kept in-file for portability */
+    @keyframes land-in    { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes land-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+    @keyframes land-shine { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+    .land-fade      { animation: land-in .8s cubic-bezier(.22,.61,.36,1) both; }
+    .land-fade-2    { animation: land-in .8s .12s cubic-bezier(.22,.61,.36,1) both; }
+    .land-fade-3    { animation: land-in .8s .24s cubic-bezier(.22,.61,.36,1) both; }
+    .land-fade-4    { animation: land-in .8s .36s cubic-bezier(.22,.61,.36,1) both; }
+    .land-float     { animation: land-float 6s ease-in-out infinite; }
+
+    .land-gradient {
+      background: linear-gradient(92deg, var(--ves-accent), var(--ves-accent-2), var(--ves-accent));
+      background-size: 200% auto;
+      -webkit-background-clip: text; background-clip: text;
+      color: transparent;
+      animation: land-shine 6s linear infinite;
+    }
+
+    .land-cta {
+      background: linear-gradient(92deg, var(--ves-accent), var(--ves-accent-2));
+      box-shadow: 0 12px 40px -12px var(--ves-accent);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+    .land-cta:hover { transform: translateY(-2px); box-shadow: 0 18px 50px -12px var(--ves-accent); }
+
+    .land-feature { transition: transform .4s ease, box-shadow .4s ease, border-color .4s ease; }
+    .land-feature:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--ves-glow);
+      border-color: color-mix(in oklab, var(--ves-accent) 40%, transparent);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .land-fade, .land-fade-2, .land-fade-3, .land-fade-4, .land-float, .land-gradient { animation: none !important; }
+    }
+  </style>
+</head>
+
+<body class="h-full overflow-x-hidden">
+  <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>
+  <div class="ves-mesh" aria-hidden="true"></div>
+
+  <div class="mx-auto flex min-h-full max-w-6xl flex-col px-6 py-8">
+
+    {# ---------- nav ---------- #}
+    <header class="land-fade flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5">
+        {% include "partials/logo.html" with size=34 %}
+        <span class="ves-wordmark text-lg">Vespera</span>
+      </a>
+
+      <nav class="flex items-center gap-2 text-sm">
+        <a href="{% url 'accounts:login' %}"
+           class="rounded-xl px-4 py-2 text-[var(--ves-muted)] hover:text-[var(--ves-text)] hover:bg-black/5 dark:hover:bg-white/5">
+          Log in
+        </a>
+        <a href="{% url 'accounts:signup' %}"
+           class="land-cta rounded-xl px-4 py-2 font-medium text-white">
+          Get started
+        </a>
+      </nav>
+    </header>
+
+    {# ---------- hero ---------- #}
+    <section class="mt-20 flex flex-col items-center text-center md:mt-28">
+      <div class="land-fade-2 mb-6 flex items-center gap-2 rounded-full ves-glass px-4 py-1.5 text-xs text-[var(--ves-muted)]">
+        <span class="ves-pulse"></span>
+        Live · privacy-first · no email required
+      </div>
+
+      <h1 class="land-fade-2 max-w-3xl text-5xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
+        Track what matters.<br />
+        <span class="land-gradient">See the finish line.</span>
+      </h1>
+
+      <p class="land-fade-3 mt-6 max-w-xl text-base text-[var(--ves-muted)] md:text-lg">
+        Vespera forecasts your course finish dates with confidence intervals,
+        watches your spending, and keeps your habits honest — all without an email account.
+      </p>
+
+      <div class="land-fade-4 mt-10 flex flex-wrap items-center justify-center gap-3">
+        <a href="{% url 'accounts:signup' %}"
+           class="land-cta rounded-2xl px-7 py-3.5 text-sm font-medium text-white">
+          Create your account
+        </a>
+        <a href="{% url 'accounts:login' %}"
+           class="rounded-2xl border border-[var(--ves-border)] px-7 py-3.5 text-sm font-medium text-[var(--ves-text)] hover:bg-black/5 dark:hover:bg-white/5">
+          I already have one
+        </a>
+      </div>
+    </section>
+
+    {# ---------- feature grid ---------- #}
+    <section class="mt-24 grid gap-5 md:grid-cols-3">
+      <div class="land-feature rounded-2xl ves-glass p-6">
+        <div class="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-xl shadow-lg shadow-[color:var(--ves-accent)]/20">
+          📚
+        </div>
+        <h3 class="text-lg font-semibold">Courses with real forecasting</h3>
+        <p class="mt-2 text-sm text-[var(--ves-muted)]">
+          Not just a progress bar. Vespera predicts <em>when</em> you'll finish — with
+          an 80% confidence interval — and simulates what extra study time would do.
+        </p>
+      </div>
+
+      <div class="land-feature rounded-2xl ves-glass p-6">
+        <div class="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-xl shadow-lg shadow-[color:var(--ves-accent)]/20">
+          💸
+        </div>
+        <h3 class="text-lg font-semibold">Spending, quietly tracked</h3>
+        <p class="mt-2 text-sm text-[var(--ves-muted)]">
+          Log what you spend. See monthly rollups, category breakdowns, and trends
+          on one screen — without a spreadsheet.
+        </p>
+      </div>
+
+      <div class="land-feature rounded-2xl ves-glass p-6">
+        <div class="mb-4 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-xl shadow-lg shadow-[color:var(--ves-accent)]/20">
+          ⏱️
+        </div>
+        <h3 class="text-lg font-semibold">Habits you can see</h3>
+        <p class="mt-2 text-sm text-[var(--ves-muted)]">
+          A weekly grid of streaks. We watch for correlations — "you study more on
+          days you don't overspend" — and surface the patterns gently.
+        </p>
+      </div>
+    </section>
+
+    {# ---------- why privacy ---------- #}
+    <section class="mt-20 grid items-center gap-10 md:grid-cols-2">
+      <div class="land-float rounded-2xl ves-glass p-6">
+        <div class="mb-4 flex items-center justify-between text-xs uppercase tracking-wider text-[var(--ves-muted)]">
+          <span>Momentum</span>
+          <span class="flex items-center gap-2">
+            <span class="ves-pulse"></span> Live
+          </span>
+        </div>
+        <div class="ves-progress mb-4"><span style="width: 62%"></span></div>
+        <div class="grid grid-cols-2 gap-4 text-sm">
+          <div>
+            <p class="text-xs text-[var(--ves-muted)]">Predicted finish</p>
+            <p class="font-semibold">Nov 23, 2026</p>
+          </div>
+          <div>
+            <p class="text-xs text-[var(--ves-muted)]">Range (80%)</p>
+            <p class="font-semibold">Nov 15 – Dec 2</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="land-fade">
+        <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+          No email. No password reset fees.<br />
+          <span class="land-gradient">Just your data, on your terms.</span>
+        </h2>
+        <ul class="mt-6 space-y-3 text-sm text-[var(--ves-muted)]">
+          <li class="flex gap-3"><span class="text-[var(--ves-accent)]">✓</span> Sign up with a username you'll remember.</li>
+          <li class="flex gap-3"><span class="text-[var(--ves-accent)]">✓</span> Recovery codes + one security question — no inbox involved.</li>
+          <li class="flex gap-3"><span class="text-[var(--ves-accent)]">✓</span> Argon2 password hashing. Rate-limited login.</li>
+          <li class="flex gap-3"><span class="text-[var(--ves-accent)]">✓</span> The tradeoffs are documented, not hidden.</li>
+        </ul>
+      </div>
+    </section>
+
+    {# ---------- final CTA ---------- #}
+    <section class="mt-24 mb-12 text-center">
+      <h2 class="text-3xl font-semibold tracking-tight md:text-4xl">
+        Ready when you are.
+      </h2>
+      <p class="mt-3 text-sm text-[var(--ves-muted)]">
+        Takes 30 seconds. No credit card, no email.
+      </p>
+      <a href="{% url 'accounts:signup' %}"
+         class="land-cta mt-8 inline-block rounded-2xl px-8 py-4 text-sm font-medium text-white">
+        Start tracking →
+      </a>
+    </section>
+
+    {# ---------- footer ---------- #}
+    <footer class="mt-auto border-t border-[var(--ves-border)] pt-6 pb-2 text-xs text-[var(--ves-muted)]">
+      <div class="flex flex-col items-center justify-between gap-3 sm:flex-row">
+        <p>Built by <span class="font-medium text-[var(--ves-text)]">Arafat Khan</span></p>
+        <div class="flex items-center gap-5">
+          <a href="https://linkedin.com/in/iamthearafatkhan" target="_blank" rel="noopener" class="hover:text-[var(--ves-text)]">LinkedIn</a>
+          <a href="https://github.com/iamthearafatkhan" target="_blank" rel="noopener" class="hover:text-[var(--ves-text)]">GitHub</a>
+          <a href="https://arafatkhan.vercel.app" target="_blank" rel="noopener" class="flex items-center gap-2 hover:text-[var(--ves-text)]">
+            <img src="{% static 'img/ak-logo.png' %}" alt="AK" width="16" height="16" class="rounded" />
+            <span>arafatkhan.vercel.app</span>
+          </a>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.net.min.js"></script>
+  <script src="{% static 'js/vanta-bg.js' %}"></script>
+</body>
+</html>

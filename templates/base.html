@@ -1,17 +1,16 @@
-{# templates/base.html #}
 {% load static %}
 <!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
-  <link rel="icon" type="image/svg+xml" href="{% static 'img/vespera.svg' %}" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Vespera{% endblock %}</title>
 
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/vespera.svg' %}" />
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>tailwind.config = { darkMode: "class" };</script>
 
-  {# apply saved theme before paint — prevents white flash in dark mode #}
   <script>
     (function () {
       var saved = localStorage.getItem("theme");
@@ -21,15 +20,14 @@
   </script>
 
   <link rel="stylesheet" href="{% static 'css/app.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/vespera.css' %}" />  {# premium layer #}
+  <link rel="stylesheet" href="{% static 'css/vespera.css' %}" />
+  {% block extra_css %}{% endblock %}
 </head>
 
 <body class="h-full">
 
-  {# Vanta WebGL particle field — sits furthest back #}
+  {# Vanta lives here — ALWAYS rendered, on every page including login/signup/landing #}
   <div id="vanta-bg" class="fixed inset-0 -z-10" aria-hidden="true"></div>
-
-  {# ambient gradient mesh — sits on top of Vanta #}
   <div class="ves-mesh" aria-hidden="true"></div>
 
   {% if user.is_authenticated %}{% include "partials/sidebar.html" %}{% endif %}
@@ -48,12 +46,12 @@
   <script src="{% static 'js/theme.js' %}"></script>
   <script src="{% static 'js/sidebar.js' %}"></script>
 
-  {# Vanta: THREE must load first, then the effect, then our init #}
+  {# Vanta: THREE first, NET second, init last #}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanta@0.5.24/dist/vanta.net.min.js"></script>
   <script src="{% static 'js/vanta-bg.js' %}"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
 
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

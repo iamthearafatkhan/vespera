@@ -1,10 +1,17 @@
 # accounts/home_urls.py
+from django.shortcuts import redirect, render
 from django.urls import path
-from django.shortcuts import redirect
+
 
 def home(request):
+    """Public entry point.
+
+    Logged-in → dashboard.
+    Logged-out → landing page.
+    """
     if request.user.is_authenticated:
-        return redirect("accounts:profile")
-    return redirect("accounts:login")
+        return redirect("dashboard:home")
+    return render(request, "landing.html")
+
 
 urlpatterns = [path("", home)]
