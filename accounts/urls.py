@@ -12,4 +12,5 @@ urlpatterns = [
     path("recovery-codes/", views.recovery_codes, name="recovery_codes"),
     path("reset/", views.reset_step1, name="reset_step1"),
     path("reset/new/", views.reset_step2, name="reset_step2"),
+    path("recovery-codes/regenerate/", views.regenerate_recovery_codes, name="regenerate_recovery_codes"),
 ]

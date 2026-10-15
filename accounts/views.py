@@ -149,3 +149,22 @@ def reset_step2(request):
         return redirect("accounts:login")
 
     return render(request, "accounts/reset_step2.html", {"form": form, "token": token})
+
+
+@login_required
+@require_http_methods(["POST"])
+def regenerate_recovery_codes(request):
+    """Generate a fresh set of codes. Invalidates unused old ones."""
+    # burn any unused old codes
+    request.user.recovery_codes.filter(used_at__isnull=True).delete()
+
+    # generate 8 new ones
+    pairs = RecoveryCode.generate_codes(8)
+    RecoveryCode.objects.bulk_create(
+        [RecoveryCode(user=request.user, code_hash=h) for _, h in pairs]
+    )
+
+    # stash plaintext for one-time display
+    request.session["new_recovery_codes"] = [c for c, _ in pairs]
+    messages.success(request, "New codes generated — old ones are now invalid.")
+    return redirect("accounts:recovery_codes")

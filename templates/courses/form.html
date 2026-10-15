@@ -15,13 +15,26 @@
     {% csrf_token %}
 
     {% for field in form %}
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
-        {{ field }}
-        {% for err in field.errors %}
-          <p class="mt-1 text-xs text-red-500">{{ err }}</p>
-        {% endfor %}
-      </div>
+      {% if field.name == "color" %}
+        <div>
+          <label class="mb-2 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">Color</label>
+          <div class="flex flex-wrap gap-3">
+            {% for sw in form.swatches %}
+              <label class="cursor-pointer" title="{{ sw.label }}">
+                <input type="radio" name="color" value="{{ sw.key }}"
+                       class="sr-only" {% if field.value == sw.key %}checked{% endif %} />
+                <span class="swatch" style="--sw: {{ sw.hex }};"></span>
+              </label>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div>
+          <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
+          {{ field }}
+          {% for err in field.errors %}<p class="mt-1 text-xs text-red-500">{{ err }}</p>{% endfor %}
+        </div>
+      {% endif %}
     {% endfor %}
 
     {% for err in form.non_field_errors %}
@@ -30,7 +43,7 @@
 
     <div class="flex gap-3 pt-2">
       <button type="submit"
-              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
+              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
         {% if mode == "edit" %}Save changes{% else %}Create course{% endif %}
       </button>
       <a href="{% url 'courses:list' %}"
@@ -40,15 +53,45 @@
 </div>
 
 <style>
-  form input, form textarea, form select {
+  main form input[type="text"],
+  main form input[type="url"],
+  main form input[type="number"],
+  main form textarea,
+  main form select {
     width: 100%; border-radius: .75rem; padding: .55rem .75rem;
     border: 1px solid var(--ves-border);
     background: color-mix(in oklab, var(--ves-bg) 60%, transparent);
     color: var(--ves-text); outline: none;
   }
-  form input:focus, form textarea:focus, form select:focus {
+  main form input[type=text]:focus, main form input[type=url]:focus,
+  main form input[type=number]:focus, main form textarea:focus, main form select:focus {
     border-color: color-mix(in oklab, var(--ves-accent) 60%, transparent);
     box-shadow: var(--ves-glow);
+  }
+
+  /* visually hide the raw radio (sr-only fallback for browsers without Tailwind) */
+  form input[type="radio"] {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 32px; height: 32px; border-radius: 999px;
+    background: var(--sw, #888);
+    border: 3px solid transparent;
+    transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease;
+    cursor: pointer;
+  }
+  .swatch:hover { transform: scale(1.08); }
+  form input[type="radio"]:checked + .swatch {
+    border-color: var(--ves-text);
+    transform: scale(1.15);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--sw, #888) 30%, transparent);
+  }
+  form input[type="radio"]:focus-visible + .swatch {
+    outline: 2px solid var(--ves-accent);
+    outline-offset: 2px;
   }
 </style>
 {% endblock %}

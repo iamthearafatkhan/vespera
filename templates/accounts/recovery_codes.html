@@ -1,35 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Recovery codes · PulseTrack{% endblock %}
+{% block title %}Recovery codes · Vespera{% endblock %}
 
 {% block content %}
 <div class="mx-auto max-w-xl py-12">
-  <h1 class="mb-3 text-2xl font-semibold">Save these codes</h1>
 
   {% if codes %}
-    <p class="mb-6 text-sm text-neutral-500 dark:text-neutral-400">
+    <h1 class="mb-3 text-2xl font-semibold">Save these codes</h1>
+    <p class="mb-6 text-sm text-[var(--ves-muted)]">
       This is the <strong>only time</strong> we'll show these in full.
       Each can be used once to reset your password.
     </p>
 
     <ul class="mb-6 grid grid-cols-2 gap-3 font-mono text-sm">
       {% for c in codes %}
-        <li class="rounded-lg border border-neutral-200 px-3 py-2 dark:border-neutral-800">{{ c }}</li>
+        <li class="rounded-lg border border-[var(--ves-border)] px-3 py-2">{{ c }}</li>
       {% endfor %}
     </ul>
 
-    <p class="mb-6 text-xs text-neutral-500">
+    <p class="mb-6 text-xs text-[var(--ves-muted)]">
       Tip: paste them into a note app or print them. Don't screenshot to cloud galleries.
     </p>
-  {% else %}
-    <p class="mb-6 text-sm text-neutral-500">
-      Recovery codes were already shown once. If you lost them, you can regenerate
-      a fresh set from your profile (this invalidates old ones).
-    </p>
-  {% endif %}
 
-  <a href="{% url 'accounts:profile' %}"
-     class="rounded-lg bg-neutral-900 px-4 py-2.5 text-white dark:bg-white dark:text-neutral-900">
-    I saved them — continue
-  </a>
+    <a href="{% url 'accounts:profile' %}"
+       class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+      I saved them — continue
+    </a>
+
+  {% else %}
+    <h1 class="mb-3 text-2xl font-semibold">Recovery codes</h1>
+    <p class="mb-6 text-sm text-[var(--ves-muted)]">
+      Codes can only be shown once — for your security. If you lost them,
+      you can generate a fresh set. Doing so <strong>invalidates all unused old codes</strong>.
+    </p>
+
+    <form method="post" action="{% url 'accounts:regenerate_recovery_codes' %}"
+          class="flex flex-wrap gap-3">
+      {% csrf_token %}
+      <button type="submit"
+              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20"
+              onclick="return confirm('Old unused codes will stop working. Generate new ones?');">
+        Generate new codes
+      </button>
+      <a href="{% url 'accounts:profile' %}"
+         class="rounded-xl border border-[var(--ves-border)] px-5 py-2.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+        Back to profile
+      </a>
+    </form>
+  {% endif %}
 </div>
 {% endblock %}

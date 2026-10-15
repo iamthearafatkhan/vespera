@@ -11,7 +11,7 @@
 :root {
   /* light theme */
   --ves-bg: #f4f5f8;
-  --ves-surface: rgba(216, 219, 226, 0.55);
+  --ves-surface: rgba(255, 255, 255, 0.82);
   /* alabaster grey glass */
   --ves-border: rgba(55, 63, 81, 0.12);
   /* charcoal blue @ 12% */
@@ -30,7 +30,7 @@
 .dark {
   --ves-bg: #1b1b1e;
   /* carbon black */
-  --ves-surface: rgba(55, 63, 81, 0.35);
+  --ves-surface: rgba(24, 27, 34, 0.82);
   /* charcoal blue glass */
   --ves-border: rgba(216, 219, 226, 0.08);
   /* alabaster @ 8% */
@@ -152,10 +152,11 @@ select option {
 .ves-glass {
   background: var(--ves-surface);
   border: 1px solid var(--ves-border);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
   border-radius: 1rem;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset,
+    0 8px 32px -12px rgba(0, 0, 0, .35);
 }
 
 .ves-glass-hover {
@@ -313,5 +314,185 @@ select option {
   .ves-glass-hover,
   .ves-logo {
     transition: none;
+  }
+}
+
+
+
+/* ================================================================
+   POLISH ANIMATIONS — quiet, premium, motion-safe
+   ================================================================ */
+
+/* Cards fade-and-lift as they come into view (dashboard grid, course list) */
+@media (prefers-reduced-motion: no-preference) {
+
+  /* Entrance for any element with .ves-rise */
+  .ves-rise {
+    animation: ves-rise .6s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  .ves-rise-1 {
+    animation-delay: .06s;
+  }
+
+  .ves-rise-2 {
+    animation-delay: .12s;
+  }
+
+  .ves-rise-3 {
+    animation-delay: .18s;
+  }
+
+  .ves-rise-4 {
+    animation-delay: .24s;
+  }
+
+  .ves-rise-5 {
+    animation-delay: .30s;
+  }
+
+  .ves-rise-6 {
+    animation-delay: .36s;
+  }
+
+  @keyframes ves-rise {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Nav items slide-in from left (sidebar) */
+  .ves-slide {
+    animation: ves-slide .5s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  @keyframes ves-slide {
+    from {
+      opacity: 0;
+      transform: translateX(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Progress bar — grows on first paint */
+  .ves-progress>span {
+    animation: ves-bar 1s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  @keyframes ves-bar {
+    from {
+      transform: scaleX(0);
+      transform-origin: left;
+    }
+
+    to {
+      transform: scaleX(1);
+      transform-origin: left;
+    }
+  }
+
+  /* Card hover — subtle glow + lift (already there for .ves-glass-hover; extend here) */
+  .ves-lift {
+    transition: transform .3s cubic-bezier(.22, .61, .36, 1),
+      box-shadow .3s cubic-bezier(.22, .61, .36, 1);
+  }
+
+  .ves-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 32px -12px rgba(88, 164, 176, .35);
+  }
+
+  /* Numbers pop when they first appear */
+  .ves-pop {
+    animation: ves-pop .5s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  @keyframes ves-pop {
+    0% {
+      opacity: 0;
+      transform: scale(.96);
+    }
+
+    60% {
+      transform: scale(1.02);
+    }
+
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  /* Gradient shimmer — sweep across headings on hover */
+  .gradient-text,
+  .ves-gradient-text {
+    background-size: 200% auto;
+    transition: background-position .8s ease;
+  }
+
+  .gradient-text:hover,
+  .ves-gradient-text:hover {
+    background-position: 100% 50%;
+  }
+
+  /* Theme crossfade — everything fades when the theme toggles */
+  html {
+    transition: background-color .35s ease, color .35s ease;
+  }
+
+  body {
+    transition: background-color .35s ease, color .35s ease;
+  }
+}
+
+/* Always: reduced-motion users get instant, no-motion UI */
+@media (prefers-reduced-motion: reduce) {
+
+  .ves-rise,
+  .ves-slide,
+  .ves-pop,
+  .ves-progress>span {
+    animation: none !important;
+  }
+
+  .ves-lift {
+    transition: none;
+  }
+}
+
+/* in vespera.css */
+@media (prefers-reduced-motion: no-preference) {
+  nav>a {
+    animation: ves-slide .5s cubic-bezier(.22, .61, .36, 1) both;
+  }
+
+  nav>a:nth-child(1) {
+    animation-delay: .02s;
+  }
+
+  nav>a:nth-child(2) {
+    animation-delay: .06s;
+  }
+
+  nav>a:nth-child(3) {
+    animation-delay: .10s;
+  }
+
+  nav>a:nth-child(4) {
+    animation-delay: .14s;
+  }
+
+  nav>a:nth-child(5) {
+    animation-delay: .18s;
   }
 }

@@ -4,9 +4,29 @@ from django.utils import timezone
 from .models import Course, StudySession
 
 
+# Available color swatches for course cards.
+# Keys must match the values stored in Course.color.
+COLOR_SWATCHES = [
+    {"key": "violet",  "hex": "#8b7bff", "label": "Violet"},
+    {"key": "teal",    "hex": "#2ee7d6", "label": "Teal"},
+    {"key": "emerald", "hex": "#10b981", "label": "Emerald"},
+    {"key": "amber",   "hex": "#f5a623", "label": "Amber"},
+    {"key": "rose",    "hex": "#ef4444", "label": "Rose"},
+    {"key": "slate",   "hex": "#64748b", "label": "Slate"},
+]
+
+
 class CourseForm(forms.ModelForm):
+    """Create / edit a course."""
+
     hours = forms.IntegerField(min_value=0, max_value=2000, initial=0, label="Hours")
     minutes = forms.IntegerField(min_value=0, max_value=59, initial=0, label="Minutes")
+
+    color = forms.ChoiceField(
+        choices=[(s["key"], s["label"]) for s in COLOR_SWATCHES],
+        initial="violet",
+        label="Color",
+    )
 
     class Meta:
         model = Course
@@ -18,7 +38,9 @@ class CourseForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # when editing, split total_minutes back into hours / minutes
+        # expose swatches to the template
+        self.swatches = COLOR_SWATCHES
+        # on edit, split total_minutes back into hours / minutes
         if self.instance and self.instance.pk:
             h, m = divmod(self.instance.total_minutes, 60)
             self.fields["hours"].initial = h
@@ -31,7 +53,6 @@ class CourseForm(forms.ModelForm):
         total = h * 60 + m
         if total <= 0:
             raise forms.ValidationError("Total course length must be at least 1 minute.")
-        # stash for save()
         cleaned["total_minutes"] = total
         return cleaned
 
@@ -44,7 +65,7 @@ class CourseForm(forms.ModelForm):
 
 
 class StudySessionForm(forms.ModelForm):
-    """Log a session. Hours + minutes split for friendly input."""
+    """Log a single study session against a course."""
 
     hours = forms.IntegerField(min_value=0, max_value=24, initial=0, label="Hours")
     minutes = forms.IntegerField(min_value=0, max_value=59, initial=0, label="Minutes")
@@ -53,14 +74,16 @@ class StudySessionForm(forms.ModelForm):
         model = StudySession
         fields = ["notes", "occurred_at"]
         widgets = {
-            # datetime-local renders a nice native picker
-            "occurred_at": forms.DateTimeInput(attrs={"type": "datetime-local"}, format="%Y-%m-%dT%H:%M"),
+            "occurred_at": forms.DateTimeInput(
+                attrs={"type": "datetime-local"},
+                format="%Y-%m-%dT%H:%M",
+            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # pre-fill "now" so the user doesn't have to touch it
         self.fields["occurred_at"].initial = timezone.localtime().strftime("%Y-%m-%dT%H:%M")
+        self.fields["occurred_at"].input_formats = ["%Y-%m-%dT%H:%M"]
 
     def clean(self):
         cleaned = super().clean()

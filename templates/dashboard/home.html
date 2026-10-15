@@ -27,33 +27,32 @@
 
   {# ---- stat cards ---- #}
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
-    <div class="rounded-2xl ves-glass ves-glass-hover p-4">
+    <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Study · 7d</p>
       <p class="mt-1 text-2xl font-semibold">{{ stats.week_study_hours }}<span class="text-sm text-[var(--ves-muted)]"> h</span></p>
     </div>
-    <div class="rounded-2xl ves-glass ves-glass-hover p-4">
+    <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Spend · month</p>
       <p class="mt-1 text-2xl font-semibold">{{ stats.month_spend|floatformat:2 }}</p>
     </div>
-    <div class="rounded-2xl ves-glass ves-glass-hover p-4">
+    <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Active courses</p>
       <p class="mt-1 text-2xl font-semibold">{{ stats.active_courses }}</p>
     </div>
-    <div class="rounded-2xl ves-glass ves-glass-hover p-4">
+    <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Habits</p>
       <p class="mt-1 text-2xl font-semibold">{{ stats.active_habits }}</p>
     </div>
   </div>
+
   {# ---- momentum / risk card ---- #}
   <div class="rounded-2xl ves-glass p-5">
     <div class="flex items-start justify-between gap-4">
+
       <div>
         <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Momentum</p>
         <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
-          <span class="ves-pulse
-            {% if risk.label == 'at risk' %}red
-            {% elif risk.label == 'watch' %}amber
-            {% else %}grey{% endif %}"></span>
+          <span class="ves-pulse {% if risk.label == 'at risk' %}red{% elif risk.label == 'watch' %}amber{% else %}grey{% endif %}"></span>
           {{ risk.label|capfirst }}
         </p>
         <p class="mt-1 text-xs text-[var(--ves-muted)]">
@@ -62,60 +61,60 @@
         </p>
       </div>
 
-    {% if risk.top_drivers %}
-      <div class="text-right text-xs">
-        <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">What's pulling it down</p>
-        <ul class="space-y-0.5">
-          {% for name, contrib in risk.top_drivers %}
-            <li class="text-[var(--ves-muted)]">
-              {{ name }}
-              <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
-                ({{ contrib|floatformat:2 }})
-              </span>
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
+      {% if risk.top_drivers %}
+        <div class="text-right text-xs">
+          <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">What's pulling it down</p>
+          <ul class="space-y-0.5">
+            {% for name, contrib in risk.top_drivers %}
+              <li class="text-[var(--ves-muted)]">
+                {{ name }}
+                <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+                  ({{ contrib|floatformat:2 }})
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if risk.label == 'at risk' %}
+      <p class="mt-3 text-xs text-[var(--ves-muted)]">
+        Even 15 minutes today changes tomorrow's number. Small wins compound.
+      </p>
     {% endif %}
   </div>
 
-  {% if risk.label == 'at risk' %}
-    <p class="mt-3 text-xs text-[var(--ves-muted)]">
-      Even 15 minutes today changes tomorrow's number. Small wins compound.
-    </p>
+  {# ---- Cross-domain insights ---- #}
+  {% if insights %}
+    <section class="rounded-2xl ves-glass p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
+          Patterns we noticed
+        </h2>
+        <span class="text-xs text-[var(--ves-muted)]">Last 60 days</span>
+      </div>
+
+      <ul class="space-y-2.5 text-sm">
+        {% for i in insights %}
+          <li class="flex items-start gap-3">
+            <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)]"></span>
+            <div>
+              <p>{{ i.title }}</p>
+              <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
+                r = {{ i.r|floatformat:2 }} · based on {{ i.sample }} days
+              </p>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+
+      <p class="mt-3 text-[11px] leading-relaxed text-[var(--ves-muted)]">
+        These are correlations, not causes. They're meant as food for thought,
+        not instructions.
+      </p>
+    </section>
   {% endif %}
-</div>
-
-{# ---- Cross-domain insights ---- #}
-{% if insights %}
-<section class="rounded-2xl ves-glass p-5">
-  <div class="mb-3 flex items-center justify-between">
-    <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">
-      Patterns we noticed
-    </h2>
-    <span class="text-xs text-[var(--ves-muted)]">Last 60 days</span>
-  </div>
-
-  <ul class="space-y-2.5 text-sm">
-    {% for i in insights %}
-      <li class="flex items-start gap-3">
-        <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)]"></span>
-        <div>
-          <p>{{ i.title }}</p>
-          <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
-            r = {{ i.r|floatformat:2 }} · based on {{ i.sample }} days
-          </p>
-        </div>
-      </li>
-    {% endfor %}
-  </ul>
-
-  <p class="mt-3 text-[11px] leading-relaxed text-[var(--ves-muted)]">
-    These are correlations, not causes. They're meant as food for thought,
-    not instructions.
-  </p>
-</section>
-{% endif %}
 
   {# ---- hero forecast ---- #}
   {% if hero_course %}
@@ -165,12 +164,11 @@
     </div>
   {% endif %}
 
-    {# ---- charts ---- #}
+  {# ---- charts ---- #}
   <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
 
     <div class="rounded-2xl ves-glass p-5">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Study · last 14 days</h3>
-      {# fixed-height wrapper — Chart.js fills this, no growing #}
       <div class="relative h-[200px]">
         <canvas id="studyChart"></canvas>
       </div>
@@ -191,6 +189,7 @@
     </div>
 
   </div>
+</div>
 
 {# pass Python data to JS safely #}
 {{ study_labels|json_script:"study-labels" }}
@@ -205,16 +204,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
 (function () {
-  // read the JSON blobs Django generated
   const read = (id) => JSON.parse(document.getElementById(id).textContent);
 
-  // pull theme colors from the current CSS variables
   const css = getComputedStyle(document.documentElement);
   const accent  = css.getPropertyValue("--ves-accent").trim()  || "#58a4b0";
   const accent2 = css.getPropertyValue("--ves-accent-2").trim()|| "#a9bcd0";
   const muted   = css.getPropertyValue("--ves-muted").trim()   || "#888";
 
-  // shared grid / tick styles
   Chart.defaults.font.family = "ui-sans-serif, system-ui, sans-serif";
   Chart.defaults.color = muted;
 
@@ -229,7 +225,6 @@
     },
   };
 
-  // --- study (line, filled) ---
   const studyCtx = document.getElementById("studyChart").getContext("2d");
   const grad = studyCtx.createLinearGradient(0, 0, 0, 200);
   grad.addColorStop(0, hexA(accent, .45));
@@ -254,7 +249,6 @@
     options: baseOptions,
   });
 
-  // --- spend (bar) ---
   new Chart(document.getElementById("spendChart"), {
     type: "bar",
     data: {
@@ -275,7 +269,6 @@
     },
   });
 
-  // --- habits (bar, % complete) ---
   new Chart(document.getElementById("habitChart"), {
     type: "bar",
     data: {
@@ -297,7 +290,6 @@
     },
   });
 
-  // helper: "#rrggbb" + alpha → "rgba(r,g,b,a)"
   function hexA(hex, a) {
     const h = hex.replace("#", "");
     const n = parseInt(h.length === 3 ? h.split("").map(c => c + c).join("") : h, 16);
