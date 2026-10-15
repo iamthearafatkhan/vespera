@@ -864,3 +864,211 @@ select option {
     opacity: 1;
   }
 }
+
+/* ================================================================
+   LIVE PASSWORD CHECKLIST — signup UX
+   ================================================================ */
+
+.pw-req {
+  margin-top: 0;
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height .45s cubic-bezier(.22, .61, .36, 1),
+    opacity .3s ease,
+    margin-top .3s ease;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+/* visible state — slides open */
+.pw-req--visible {
+  margin-top: 10px;
+  max-height: 340px;
+  opacity: 1;
+  border-color: var(--ves-border);
+  padding: 12px 14px;
+  background: rgba(0, 0, 0, .18);
+}
+
+:root .pw-req--visible {
+  background: rgba(0, 0, 0, .035);
+}
+
+/* ready state — subtle emerald glow */
+.pw-req--ready {
+  border-color: #10b98155;
+  box-shadow: 0 0 0 1px #10b98133,
+    0 8px 32px -12px #10b98180;
+  background: rgba(16, 185, 129, .08);
+}
+
+:root .pw-req--ready {
+  background: rgba(16, 185, 129, .06);
+}
+
+.pw-req-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--ves-muted);
+}
+
+.pw-req--ready .pw-req-head {
+  color: #10b981;
+}
+
+.pw-req-status {
+  position: relative;
+  width: 12px;
+  height: 12px;
+  display: inline-block;
+}
+
+/* tiny sparkle that appears when ready */
+.pw-req-spark {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: #10b981;
+  opacity: 0;
+  transform: scale(.3);
+  transition: opacity .3s ease, transform .35s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.pw-req--ready .pw-req-spark {
+  opacity: 1;
+  transform: scale(1);
+  box-shadow: 0 0 12px #10b981, 0 0 24px #10b98180;
+  animation: pw-spark 1.4s ease-out infinite;
+}
+
+@keyframes pw-spark {
+
+  0%,
+  100% {
+    box-shadow: 0 0 12px #10b981, 0 0 24px #10b98180;
+  }
+
+  50% {
+    box-shadow: 0 0 6px #10b981, 0 0 14px #10b98160;
+  }
+}
+
+/* the list */
+.pw-req-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pw-req-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ves-muted);
+  transition: color .25s ease, transform .25s ease;
+}
+
+.pw-req-list li.met {
+  color: #10b981;
+}
+
+/* the check circle */
+.pw-dot {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  transition: background-color .25s ease,
+    border-color .25s ease,
+    transform .35s cubic-bezier(.34, 1.56, .64, 1),
+    color .2s ease;
+  color: var(--ves-muted);
+}
+
+.pw-dot::before {
+  content: "✓";
+  opacity: 0;
+  transform: scale(.3);
+  transition: opacity .2s ease, transform .25s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+.pw-req-list li.met .pw-dot {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  transform: scale(1.15);
+}
+
+.pw-req-list li.met .pw-dot::before {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* when the user hits a requirement mid-typing, tiny pop */
+.pw-req-list li.met {
+  animation: pw-met-pop .4s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+@keyframes pw-met-pop {
+  0% {
+    transform: translateX(0);
+  }
+
+  40% {
+    transform: translateX(3px);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* submit button celebration when all pass */
+#signup-submit.pw-ready {
+  box-shadow: 0 12px 40px -12px #10b981,
+    0 0 0 1px #10b98155 inset;
+  animation: pw-btn-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes pw-btn-glow {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .pw-req,
+  .pw-dot,
+  .pw-req-spark,
+  .pw-req-list li.met,
+  #signup-submit.pw-ready {
+    animation: none !important;
+    transition: none !important;
+  }
+}
