@@ -1,28 +1,19 @@
-{% extends "base.html" %} {% block title %}{{ course.title }} · Vespera{%
-endblock %} {% block content %}
+{% extends "base.html" %}
+{% block title %}{{ course.title }} · Vespera{% endblock %}
+
+{% block content %}
 <div class="mx-auto max-w-4xl">
+
   {# breadcrumbs + actions #}
   <div class="mb-4 flex items-center justify-between gap-4">
-    <a
-      href="{% url 'courses:list' %}"
-      class="text-sm text-[var(--ves-muted)] hover:text-[var(--ves-text)]"
-      >← All courses</a
-    >
+    <a href="{% url 'courses:list' %}" class="text-sm text-[var(--ves-muted)] hover:text-[var(--ves-text)]">← All courses</a>
     <div class="flex gap-2">
-      <a
-        href="{% url 'courses:edit' course.pk %}"
-        class="rounded-xl px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5"
-        >Edit</a
-      >
-      <form
-        method="post"
-        action="{% url 'courses:archive' course.pk %}"
-        onsubmit="return confirm('Archive this course?');"
-      >
+      <a href="{% url 'courses:edit' course.pk %}"
+         class="rounded-xl px-3 py-1.5 text-sm hover:bg-black/5 dark:hover:bg-white/5">Edit</a>
+      <form method="post" action="{% url 'courses:archive' course.pk %}"
+            onsubmit="return confirm('Archive this course?');">
         {% csrf_token %}
-        <button
-          class="rounded-xl px-3 py-1.5 text-sm text-[var(--ves-muted)] hover:bg-black/5 dark:hover:bg-white/5"
-        >
+        <button class="rounded-xl px-3 py-1.5 text-sm text-[var(--ves-muted)] hover:bg-black/5 dark:hover:bg-white/5">
           Archive
         </button>
       </form>
@@ -31,57 +22,49 @@ endblock %} {% block content %}
 
   <h1 class="mb-6 text-3xl font-semibold tracking-tight">{{ course.title }}</h1>
 
-  {# HTMX target — the whole forecast + history area updates in place after
-  logging #}
-  <div id="forecast-and-history" hx-target="this" hx-swap="innerHTML">
-    {% include "courses/_forecast_and_history.html" with course=course
-    forecast=forecast sessions=sessions form=form %}
+  {# forecast + history area — HTMX swaps this in place after logging #}
+  <div id="forecast-and-history" class="mb-4" hx-target="this" hx-swap="innerHTML">
+    {% include "courses/_forecast_and_history.html" with course=course forecast=forecast sessions=sessions form=form %}
   </div>
-</div>
-{# ---- Adaptive Study Load Advisor ---- #}
-<section class="mb-4 rounded-2xl ves-glass p-6">
-  <div class="mb-4 flex items-center justify-between gap-4">
-    <div>
+
+  {# ---- Adaptive Study Load Advisor ---- #}
+  <section class="rounded-2xl ves-glass p-6">
+    <div class="mb-4">
       <h2 class="text-lg font-semibold">What if?</h2>
       <p class="mt-1 text-xs text-[var(--ves-muted)]">
         Simulate extra study time and see how the finish date moves.
       </p>
     </div>
-  </div>
 
-  {# controls — stay outside the HTMX target so they don't reset on swap #}
-  <form id="advisor-form"
-        hx-get="{% url 'courses:advisor' course.pk %}"
-        hx-target="#advisor-result"
-        hx-swap="innerHTML"
-        hx-trigger="load, change, input delay:250ms from:#advisor-range"
-        class="mb-4 space-y-3">
+    {# controls stay OUTSIDE the HTMX target so the slider doesn't reset on swap #}
+    <form id="advisor-form"
+          hx-get="{% url 'courses:advisor' course.pk %}"
+          hx-target="#advisor-result"
+          hx-swap="innerHTML"
+          hx-trigger="load, change, input delay:250ms from:#advisor-range"
+          class="mb-4 space-y-3">
+      {% csrf_token %}
 
-    <div class="flex items-center gap-4">
-      <label class="w-32 shrink-0 text-sm text-[var(--ves-muted)]">Extra / day</label>
-      <input id="advisor-range"
-             type="range"
-             name="extra"
-             min="0" max="120" step="5" value="30"
-             class="flex-1 accent-[var(--ves-accent)]"
-             oninput="document.getElementById('advisor-value').textContent = this.value + ' min';" />
-      <span id="advisor-value" class="w-20 text-right text-sm font-medium tabular-nums">30 min</span>
+      <div class="flex items-center gap-4">
+        <label class="w-32 shrink-0 text-sm text-[var(--ves-muted)]">Extra / day</label>
+        <input id="advisor-range" type="range" name="extra"
+               min="0" max="120" step="5" value="30"
+               class="flex-1 accent-[var(--ves-accent)]"
+               oninput="document.getElementById('advisor-value').textContent = this.value + ' min';" />
+        <span id="advisor-value" class="w-20 text-right text-sm font-medium tabular-nums">30 min</span>
+      </div>
+
+      <label class="ml-32 flex items-center gap-2 text-sm">
+        <input type="checkbox" name="weekday_only" value="1" checked
+               class="accent-[var(--ves-accent)]" />
+        Weekdays only
+      </label>
+    </form>
+
+    <div id="advisor-result" class="rounded-xl border border-[var(--ves-border)] p-4">
+      <p class="text-sm text-[var(--ves-muted)]">Loading advisor…</p>
     </div>
+  </section>
 
-    <label class="ml-32 flex items-center gap-2 text-sm">
-      <input type="checkbox" name="weekday_only" value="1" checked
-             class="accent-[var(--ves-accent)]" />
-      Weekdays only
-    </label>
-  </form>
-
-  {# result — this is what HTMX swaps #}
-  <div id="advisor-result"
-       class="rounded-xl border border-[var(--ves-border)] p-4">
-    <p class="text-sm text-[var(--ves-muted)]">Loading advisor…</p>
-  </div>
-</section>
-
-{# HTMX for in-place session logging #}
-<script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</div>
 {% endblock %}
