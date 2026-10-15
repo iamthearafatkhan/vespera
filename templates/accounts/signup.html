@@ -1,61 +1,73 @@
 {% extends "base.html" %}
-{% block title %}Sign up · PulseTrack{% endblock %}
+{% block title %}Sign up · Vespera{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-md py-12">
-  <h1 class="mb-2 text-3xl font-semibold tracking-tight">Create your account</h1>
-  <p class="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
-    No email needed. Just pick a username you'll remember.
-  </p>
+<div class="mx-auto flex min-h-[80vh] max-w-lg items-center py-10">
 
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
+  <div class="w-full rounded-2xl ves-glass p-8">
 
-    {% for field in form %}
-      <div>
-        <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
-        {{ field }}
-        {% if field.help_text %}
-          <p class="mt-1 text-xs text-neutral-500">{{ field.help_text }}</p>
-        {% endif %}
-        {% for err in field.errors %}
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ err }}</p>
-        {% endfor %}
-      </div>
-    {% endfor %}
+    <div class="mb-8 flex flex-col items-center text-center">
+      {% include "partials/logo.html" with size=48 %}
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Create your account</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">
+        No email. Just a username you'll remember.
+      </p>
+    </div>
 
-    {% for err in form.non_field_errors %}
-      <p class="text-sm text-red-600 dark:text-red-400">{{ err }}</p>
-    {% endfor %}
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
 
-    <button type="submit"
-            class="w-full rounded-lg bg-neutral-900 px-4 py-2.5 text-white
-                   hover:bg-neutral-800 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200">
-      Create account
-    </button>
-  </form>
+      {% for field in form %}
+        <div>
+          <label class="mb-1 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">
+            {{ field.label }}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="mt-1 text-[11px] text-[var(--ves-muted)]">{{ field.help_text }}</p>
+          {% endif %}
+          {% for err in field.errors %}
+            <p class="mt-1 text-xs text-red-500">{{ err }}</p>
+          {% endfor %}
+        </div>
+      {% endfor %}
 
-  <p class="mt-6 text-center text-sm text-neutral-500">
-    Already have an account?
-    <a href="{% url 'accounts:login' %}" class="font-medium text-neutral-900 underline dark:text-white">Log in</a>
-  </p>
+      {% for err in form.non_field_errors %}
+        <p class="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-500">{{ err }}</p>
+      {% endfor %}
+
+      <button type="submit"
+              class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-3 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/30 transition hover:brightness-110">
+        Create account
+      </button>
+    </form>
+
+    <p class="mt-6 text-center text-xs text-[var(--ves-muted)]">
+      Already have an account?
+      <a href="{% url 'accounts:login' %}" class="underline hover:text-[var(--ves-text)]">Log in</a>
+    </p>
+  </div>
 </div>
 
-{# quick inline styling so form widgets inherit the theme — later we'll move to a form library #}
+{# style the raw form widgets to match our theme #}
 <style>
-  form input, form select {
+  main form input, main form select, main form textarea {
     width: 100%;
-    border-radius: 0.5rem;
-    border: 1px solid rgb(212 212 212);
-    padding: 0.55rem 0.75rem;
-    background: white;
+    border-radius: .75rem;
+    border: 1px solid var(--ves-border);
+    background: rgba(0,0,0,.05);
+    padding: .6rem 1rem;
+    font-size: .875rem;
+    color: var(--ves-text);
     outline: none;
+    transition: border-color .2s, background-color .2s;
   }
-  .dark form input, .dark form select {
-    background: rgb(23 23 23);
-    border-color: rgb(64 64 64);
-    color: white;
+  .dark main form input, .dark main form select, .dark main form textarea {
+    background: rgba(255,255,255,.05);
   }
-  form input:focus, form select:focus { border-color: rgb(115 115 115); }
+  main form input:focus, main form select:focus, main form textarea:focus {
+    border-color: var(--ves-accent);
+    background: rgba(88, 164, 176, .08);
+  }
 </style>
 {% endblock %}

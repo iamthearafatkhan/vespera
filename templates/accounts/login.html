@@ -2,37 +2,50 @@
 {% block title %}Log in · Vespera{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-md py-20">
+<div class="mx-auto flex min-h-[80vh] max-w-md items-center">
 
-  <h1 class="mb-8 text-3xl font-semibold tracking-tight">Welcome back</h1>
+  <div class="w-full rounded-2xl ves-glass p-8">
 
-  <form method="post" class="space-y-4">
-    {% csrf_token %}
+    {# brand mark #}
+    <div class="mb-8 flex flex-col items-center text-center">
+      {% include "partials/logo.html" with size=48 %}
+      <h1 class="mt-4 text-2xl font-semibold tracking-tight">Welcome back</h1>
+      <p class="mt-1 text-sm text-[var(--ves-muted)]">
+        Username and password — no email required.
+      </p>
+    </div>
 
-    {% for field in form %}
+    <form method="post" class="space-y-4">
+      {% csrf_token %}
+
       <div>
-        <label class="mb-1 block text-sm font-medium">{{ field.label }}</label>
-        {{ field }}
-        {% for err in field.errors %}
-          <p class="mt-1 text-xs text-red-500">{{ err }}</p>
-        {% endfor %}
+        <label class="mb-1 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">Username</label>
+        <input type="text" name="username" required autofocus autocomplete="username"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-4 py-2.5 text-sm outline-none transition focus:border-[var(--ves-accent)] focus:bg-black/10 dark:bg-white/5 dark:focus:bg-white/10" />
       </div>
-    {% endfor %}
 
-    {% for err in form.non_field_errors %}
-      <p class="text-sm text-red-500">{{ err }}</p>
-    {% endfor %}
+      <div>
+        <label class="mb-1 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">Password</label>
+        <input type="password" name="password" required autocomplete="current-password"
+               class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-4 py-2.5 text-sm outline-none transition focus:border-[var(--ves-accent)] focus:bg-black/10 dark:bg-white/5 dark:focus:bg-white/10" />
+      </div>
 
-    <button type="submit"
-            class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-500/20">
-      Log in
-    </button>
-  </form>
+      {% if form.non_field_errors %}
+        {% for err in form.non_field_errors %}
+          <p class="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-500">{{ err }}</p>
+        {% endfor %}
+      {% endif %}
 
-  <div class="mt-6 flex justify-between text-sm text-[var(--ves-muted)]">
-    <a href="{% url 'accounts:signup' %}" class="underline">Create account</a>
-    <a href="{% url 'accounts:reset_step1' %}" class="underline">Forgot password?</a>
+      <button type="submit"
+              class="w-full rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-3 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/30 transition hover:brightness-110">
+        Log in
+      </button>
+    </form>
+
+    <div class="mt-6 flex items-center justify-between text-xs text-[var(--ves-muted)]">
+      <a href="{% url 'accounts:signup' %}" class="underline hover:text-[var(--ves-text)]">Create account</a>
+      <a href="{% url 'accounts:reset_step1' %}" class="underline hover:text-[var(--ves-text)]">Forgot password?</a>
+    </div>
   </div>
-
 </div>
 {% endblock %}

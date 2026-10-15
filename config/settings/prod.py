@@ -21,3 +21,20 @@ SECURE_HSTS_PRELOAD = True
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+
+
+# ---- Email (alwaysdata SMTP) ----
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp-vespera.alwaysdata.net")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Who gets error emails when DEBUG=False
+ADMINS = [("Arafat Khan", EMAIL_HOST_USER)]
+
+# Server email = the envelope sender
+SERVER_EMAIL = EMAIL_HOST_USER

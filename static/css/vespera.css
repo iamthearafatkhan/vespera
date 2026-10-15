@@ -47,9 +47,14 @@
 }
 
 /* ---------- Base ---------- */
-html,
-body {
+html {
+  /* Fallback colour for when Vanta is disabled (reduced motion, no WebGL) */
   background: var(--ves-bg);
+}
+
+body {
+  /* Transparent — lets the Vanta canvas at z-index:-10 show through */
+  background: transparent;
   color: var(--ves-text);
 }
 
