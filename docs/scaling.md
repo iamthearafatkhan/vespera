@@ -1,85 +1,157 @@
 # Vespera — Scaling Notes
 
-This document answers the question every interviewer asks:
-**"What happens when you have 1M users?"**
+The single most-asked interview question about any web project:
+**"What happens when this has 1M users?"**
 
-Spoiler: the current deployment is sized for ~500 active users on a free
-tier. This is what would change — and in what order — to serve 1M.
+This document answers that for Vespera with real numbers, a staged plan, and
+an honest admission of where the current deployment breaks.
 
-## Current deployment
+---
 
-| Component | Choice | Why |
+## Current state
+
+| Layer | Choice | Why |
 |---|---|---|
 | App server | alwaysdata Python WSGI (gunicorn) | Free tier, no ops overhead |
 | Database | PostgreSQL 17 (alwaysdata free) | Real SQL, real queries |
 | Static files | WhiteNoise | No CDN needed at this scale |
 | Background jobs | alwaysdata cron | Nightly model retraining |
-| Row count, real | < 100 | Demo stage |
+| ML | scikit-learn, in-process | Fits on the request thread at this scale |
 
-## Free-tier ceiling (measured)
+**Row counts at demo stage:** a few dozen users, low thousands of rows.
+**Free-tier ceiling:** ~1,000 registered users before storage becomes the wall.
 
-Rough numbers from running the seed script locally:
+---
 
-| Users (registered) | Active (last 7d) | Rows in DB | Disk | Notes |
+## Data volume per user
+
+Every active user generates roughly:
+
+| Entity | Rows / month | Notes |
+|---|---|---|
+| StudySessions | 20–60 | ~1 KB each including index |
+| Expenses | 40–120 | ~0.5 KB each |
+| HabitCheckins | 30–150 | one per habit per day |
+| ClassEntry | 0 (static) | created once |
+| ImportantDate | 0–5 (static) | created once |
+
+**~1 KB / day / active user.** An idle user is ~0.5 KB static forever.
+
+That gives us a rough projection table:
+
+| Registered | Active (7d) | Rows in DB | Disk | What holds |
 |---|---|---|---|---|
-| 100 | 20 | ~15K | ~5 MB | Free tier comfortable |
-| 1,000 | 200 | ~150K | ~50 MB | Free tier limit approaching |
-| 10,000 | 2,000 | ~1.5M | ~500 MB | Need paid DB |
-| 100,000 | 20,000 | ~15M | ~5 GB | Need a real stack |
-| 1,000,000 | 200,000 | ~150M | ~50 GB | Sharding + caching required |
+| 100 | 20 | ~50K | ~10 MB | Free tier comfortable |
+| 1,000 | 200 | ~500K | ~100 MB | Free tier ceiling |
+| 10,000 | 2,000 | ~5M | ~1 GB | Needs paid DB |
+| 100,000 | 20,000 | ~50M | ~10 GB | Needs a real stack |
+| 1,000,000 | 200,000 | ~500M | ~100 GB | Sharding + caching |
 
-**Rule of thumb**: every active user adds ~1 KB/day across all trackers.
-Every registered-but-idle user is ~0.5 KB static.
+Assumption: 20% active-to-registered ratio. That's generous — most free apps sit closer to 10%.
 
-## What breaks first, and how to fix each
+---
+
+## What breaks, in order — and the fix
 
 ### Stage 1 — 1K registered (~200 active). Free tier holds.
-- All queries fit in RAM.
-- Single gunicorn worker handles the load.
-- No changes needed.
+
+- All queries fit in PostgreSQL's working set.
+- One gunicorn worker handles the request rate.
+- No changes needed. This is where Vespera is today.
 
 ### Stage 2 — 10K registered (~2K active). Free tier hits walls.
-- **Read replicas** for the dashboard queries (`study_last_days`, `spend_last_days`, etc.). They're read-only and can tolerate 1s lag.
-- **Redis cache** for `forecast_course()` — the same user refreshing doesn't need recompute. Key: `forecast:{course_id}:{last_session_id}`. TTL 5 minutes.
-- **Database connection pooling** (PgBouncer). Free-tier Postgres drops connections above ~20 concurrent.
-- **CDN** for static files (Cloudflare free). WhiteNoise becomes a bottleneck above ~50 req/s.
+
+**What breaks first:**
+
+1. **Static file serving.** WhiteNoise is a Python process serving CSS/JS on the same box that runs Django. Above ~50 req/s of static assets, it competes with the app for CPU.
+2. **Cold dashboard queries.** `study_last_days`, `spend_last_days`, and `habit_completion_last_days` each run aggregations over 14–60 days of the user's history. At 2K active users hitting `/` multiple times per session, these become the dominant DB load.
+3. **Postgres connection limit.** Free tier caps at ~20 concurrent. Two gunicorn workers × 12 threads × per-request connections will exhaust it.
+
+**Fixes:**
+
+- **CDN for static files.** Cloudflare free tier. Zero config change — just move the `/static/` URL to the CDN origin.
+- **Redis cache for `forecast_course()`.** Key: `forecast:{course_id}:{last_session_id}`. TTL 5 minutes. Invalidates naturally when a new session lands because the key changes.
+- **PgBouncer in transaction mode.** Keeps app-side connections at 2–3 while Postgres sees 20+. Free-tier essential.
+- **Add a covering index** on `StudySession (course_id, occurred_at DESC) INCLUDE (minutes)`. The forecast engine reads this exact pattern.
 
 ### Stage 3 — 100K registered (~20K active). Requires paid infrastructure.
-- **Horizontal app servers**: 3–5 gunicorn instances behind a load balancer.
-- **Read replica for analytics**: dashboards go to a replica, writes go to primary.
-- **Pre-aggregate daily metrics**: instead of `SUM(minutes)` on every dashboard load, maintain a `DailyUserStats` table updated on session write. Dashboard becomes a single indexed lookup.
-- **Move ML training offline**: nightly cron retrains and stores coefficients in a `ModelArtifact` table. Prediction becomes a load + dot-product, not a live sklearn call.
-- **Object storage** (S3) for exports and generated PDFs — alwaysdata disk won't hold them.
+
+**What breaks:**
+
+1. **Forecast recomputation.** Even cached, 20K users × a few courses × hourly cache misses is a lot of Python work on the app servers.
+2. **Dashboard N+1.** `dashboard/home.html` builds three chart series per request. Each is a separate DB round-trip.
+3. **ML retraining.** Fitting a calibrated GBM on real data starts taking longer than a cron window.
+4. **Disk I/O** for exports and PDFs — alwaysdata's free tier won't hold them.
+
+**Fixes:**
+
+- **Pre-aggregate daily stats.** Add a `DailyUserStats` table — one row per user per day, updated on write. `study_last_days` becomes a `SELECT ... WHERE user_id = ? AND day >= ?` on an indexed column. Dashboard drops from ~50ms to ~3ms.
+- **Horizontal app servers.** 3–5 gunicorn instances behind a load balancer. Sessions move to Redis (`SESSION_ENGINE = "django.contrib.sessions.backends.cache"`) so any server can serve any request.
+- **Read replica for analytics.** Dashboard queries go to the replica. Writes go to primary. 1-second lag is invisible to users.
+- **Move ML training offline.** Nightly cron fits the model, serializes coefficients + scaler to a `ModelArtifact` row (or S3). Prediction becomes: load artifact → dot-product. No sklearn import in the request path.
+- **Object storage** (S3-compatible) for CSV exports and generated PDFs.
 
 ### Stage 4 — 1M registered (~200K active). Distributed system.
-- **Shard by `user_id % N`**: all user-scoped queries become single-shard after routing. No cross-user JOINs exist in the schema, so this is clean.
-- **Separate OLTP and OLAP**: Postgres for writes, ClickHouse or BigQuery for analytics aggregates. Dashboards query OLAP.
-- **Model serving** as a separate microservice with a cached batch API: send 1000 user feature vectors, get 1000 predictions. Single round-trip.
-- **Event stream** (Kafka) for activity: replaces per-request writes with batched commits.
-- **Session store**: Redis instead of DB. Django `SESSION_ENGINE = "django.contrib.sessions.backends.cache"`.
-- **Cold storage**: sessions older than 90 days to object storage; only aggregates stay hot.
 
-## What I'd monitor before upgrading
+**What breaks:**
 
-The `/staff/` metrics page tracks exactly the numbers that predict the ceiling:
+1. **Single Postgres primary** can't take 200K users × ~5 writes/day = 1M writes/day plus everything else.
+2. **Cross-user queries** — the `/staff/` metrics page — become expensive table scans.
+3. **Model serving** at 200K users × hourly = 5M predictions/day.
+4. **Backup window** exceeds any reasonable RPO.
 
-- **Active / Total ratio** — if 20% of registered users are active, free tier lasts to ~1K. If 50%, the ceiling drops to ~400.
-- **DB size** — alwaysdata shows this in the panel. Alert at 80% of plan.
-- **P95 response time** — anything above 400ms on the dashboard means a query needs an index or a cache.
-- **Slow query log** — Postgres `log_min_duration_statement = 500`.
+**Fixes:**
+
+- **Shard by `user_id`.** The schema is already shard-friendly: every user-owned model has a `user_id` FK, and there are **no cross-user JOINs** in the hot path. `user_id % N` routing sends every request to a single shard.
+- **Separate OLTP from OLAP.** Postgres for transactional writes. ClickHouse or BigQuery for analytics aggregates. Dashboards query OLAP, never OLTP.
+- **Event stream.** Kafka or Kinesis for activity events. Batched commits replace per-request writes.
+- **Batch ML serving.** One request from the app server carries 1,000 user feature vectors → one response with 1,000 predictions. 1000× fewer round-trips than per-user inference.
+- **Cold storage tier.** Sessions older than 90 days move to object storage. Only aggregates stay hot.
+- **Model registry** with A/B routing — v1 and v2 serving side by side, with metrics.
+
+---
+
+## What to monitor before upgrading
+
+These are the four numbers that predict each stage. All are measurable today.
+
+| Metric | Where | Alert threshold |
+|---|---|---|
+| Active / registered ratio | `/staff/` metrics page | > 30% (shrinks the free tier window) |
+| DB disk used | alwaysdata panel | 80% of plan |
+| P95 dashboard response | Django debug toolbar (dev), New Relic (prod) | > 400ms |
+| Postgres slow queries | `log_min_duration_statement = 500` | Any query > 500ms |
+
+If any two thresholds fire, it's time to execute the next stage.
+
+---
 
 ## What I would NOT do
 
-- **Not shard early.** A single well-indexed Postgres handles 10K users on a $20 VPS.
-- **Not use NoSQL.** The data is relational (users → courses → sessions). Postgres is the right tool.
-- **Not add a message queue at 2K users.** Cron is enough until you need sub-minute latency.
+Deliberately listed because "not doing things" is as important as doing them.
 
-## The load test (planned)
+- **Not shard early.** A single well-indexed Postgres on a $20/mo VPS handles 10K users. Sharding before 100K wastes engineering hours.
+- **Not use NoSQL.** The data is fundamentally relational — users → courses → sessions, users → habits → checkins. Postgres is the right tool. MongoDB would be a downgrade.
+- **Not add a message queue at 2K users.** Cron is enough until sub-minute latency is a user-visible feature.
+- **Not pre-optimize the ML model.** A GBM that fits in 50ms and runs on the request thread is fine until 10K active users. Microservices for prediction are premature.
+- **Not chase distributed tracing before there's a distributed system.** Logs + Sentry catch 95% of production bugs at this scale.
 
-`docs/loadtest.py` (not yet written) will:
-1. Generate 1M synthetic users + 20M sessions + 5M expenses.
-2. Run Locust against the dashboard + course detail endpoints.
-3. Produce a report: RPS, P50/P95/P99, and where it breaks.
+---
 
-Target when written: 100 RPS at P95 < 300ms on the free tier — the number
-that tells us exactly when to upgrade.
+## The load test (roadmap)
+
+Planned in `docs/loadtest.py` (not yet written):
+
+1. Generate 1M synthetic users, 20M sessions, 5M expenses, 10M habit checkins with realistic distributions (power-law activity, 20% active ratio).
+2. Run Locust against the three hot endpoints: `/` (dashboard), `/courses/` (list + forecast), `/expenses/insights/` (aggregates).
+3. Produce a report with RPS, P50/P95/P99, and the exact request count where the free tier breaks.
+
+Target when written: **100 RPS at P95 < 300ms on the free tier.** That's the empirical ceiling. Everything above it triggers Stage 2.
+
+---
+
+## Honest summary
+
+Vespera is not a 1M-user product today. It's a portfolio project that is *designed* for 1M, *deployed* for hundreds, and *documented* for both.
+
+This document exists because **knowing where your app breaks is more valuable than pretending it doesn't.**
