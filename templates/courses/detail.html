@@ -86,4 +86,53 @@
   </section>
 
 </div>
+
+{% if forecast.is_complete %}
+<script>
+(function () {
+  var key = "vespera-celebrated-{{ course.pk }}";
+  if (sessionStorage.getItem(key)) return;
+  sessionStorage.setItem(key, "1");
+  // wait for confetti script to load
+  window.addEventListener("load", function () {
+    setTimeout(function () {
+      if (window.confetti) {
+        window.confetti({
+          particleCount: 140,
+          spread: 90,
+          origin: { y: 0.55 },
+          colors: ["#58a4b0", "#a9bcd0", "#8b7bff", "#2ee7d6", "#10b981"],
+        });
+      }
+    }, 400);
+  });
+})();
+</script>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+<script>
+(function () {
+  var COLORS = ["#58a4b0", "#a9bcd0", "#8b7bff", "#2ee7d6", "#10b981"];
+
+  function celebrate() {
+    // centre burst
+    confetti({
+      particleCount: 140,
+      spread: 90,
+      origin: { y: 0.55 },
+      colors: COLORS,
+      scalar: 1.1,
+    });
+    // two side bursts slightly later — reads as "designed", not "default"
+    setTimeout(function () {
+      confetti({ particleCount: 60, angle: 60,  spread: 55, origin: { x: 0, y: 0.65 }, colors: COLORS });
+      confetti({ particleCount: 60, angle: 120, spread: 55, origin: { x: 1, y: 0.65 }, colors: COLORS });
+    }, 220);
+  }
+
+  // fire when the HTMX response says a course was just completed
+  document.body.addEventListener("course-completed", celebrate);
+})();
+</script>
 {% endblock %}

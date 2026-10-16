@@ -24,6 +24,8 @@ class Course(models.Model):
         ("freecodecamp", "freeCodeCamp"),
         ("book",         "Book"),
         ("university",   "University"),
+        ("SimpliLearn",        "SimpliLearn"),
+        ("DeepLearning.ai",        "DeepLearning.ai"),
         ("other",        "Other"),
     ]
     platform = models.CharField(

@@ -64,8 +64,12 @@ def course_detail(request, pk):
 @login_required
 @require_http_methods(["POST"])
 def log_session(request, pk):
-    """Handles the 'add session' form. Responds with HTMX fragment if requested."""
+    """Handles the 'add session' form. Fires a completion event when the
+    user crosses 100% on this course for the first time."""
     course = _get_user_course_or_404(request, pk)
+
+    was_complete = course.is_complete          # BEFORE logging
+
     form = StudySessionForm(request.POST)
     if form.is_valid():
         form.save(course=course, user=request.user)
@@ -73,14 +77,19 @@ def log_session(request, pk):
     else:
         messages.error(request, "Could not save session. Check the values.")
 
-    # If HTMX called us, swap the forecast + history in place.
+    just_completed = (not was_complete) and course.is_complete
+
     if request.headers.get("HX-Request"):
         forecast = forecast_course(course)
         sessions = course.sessions.all()[:30]
-        return render(request, "courses/_forecast_and_history.html", {
-            "course": course, "forecast": forecast, "sessions": sessions,
-            "form": StudySessionForm(),
+        response = render(request, "courses/_forecast_and_history.html", {
+            "course": course, "forecast": forecast,
+            "sessions": sessions, "form": StudySessionForm(),
         })
+        if just_completed:
+            response["HX-Trigger"] = "course-completed"
+        return response
+
     return redirect("courses:detail", pk=course.pk)
 
 

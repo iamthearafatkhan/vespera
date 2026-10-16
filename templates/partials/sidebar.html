@@ -54,6 +54,10 @@
         </a>
 
         <p class="sidebar-label">You</p>
+        <a href="{% url 'accounts:export' %}"
+            class="sidebar-link {% if '/export/' in request.path %}nav-active{% else %}nav-idle{% endif %}">
+          <span class="sidebar-icon">⬇️</span> Export data
+        </a>
 
         <a href="{% url 'accounts:profile' %}"
            class="sidebar-link {% if current == 'accounts' %}nav-active{% else %}nav-idle{% endif %}">

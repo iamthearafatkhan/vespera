@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Export data · Vespera{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-2xl py-8">
+
+  <a href="{% url 'accounts:profile' %}"
+     class="text-sm text-[var(--ves-muted)] hover:text-[var(--ves-text)]">← Back to profile</a>
+
+  <h1 class="mt-4 text-3xl font-semibold tracking-tight">Your data</h1>
+  <p class="mt-1 text-sm text-[var(--ves-muted)]">
+    Everything you've logged, in open formats. No lock-in.
+  </p>
+
+  <div class="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+
+    <a href="{% url 'accounts:export_json' %}"
+       class="rounded-2xl ves-glass ves-glass-hover p-6 block">
+      <div class="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-lg font-bold text-white">
+        { }
+      </div>
+      <h2 class="text-lg font-semibold">Full backup · JSON</h2>
+      <p class="mt-2 text-sm text-[var(--ves-muted)]">
+        Every course, session, expense, habit, class, and reminder — in one file.
+        Perfect for backups or migrating elsewhere.
+      </p>
+      <span class="mt-4 inline-block text-sm text-[var(--ves-accent)]">Download →</span>
+    </a>
+
+    <div class="rounded-2xl ves-glass p-6">
+      <div class="mb-3 grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] text-lg">
+        📊
+      </div>
+      <h2 class="text-lg font-semibold">Spreadsheet · CSV</h2>
+      <p class="mt-2 text-sm text-[var(--ves-muted)]">
+        Open in Excel or Google Sheets.
+      </p>
+      <div class="mt-4 flex gap-2 text-sm">
+        <a href="{% url 'accounts:export_csv' %}?kind=expenses"
+           class="rounded-lg border border-[var(--ves-border)] px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">
+          Expenses CSV
+        </a>
+        <a href="{% url 'accounts:export_csv' %}?kind=sessions"
+           class="rounded-lg border border-[var(--ves-border)] px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/5">
+          Sessions CSV
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="mt-8 text-xs text-[var(--ves-muted)]">
+    Your data is yours. No analytics, no tracking, no third parties.
+  </p>
+</div>
+{% endblock %}

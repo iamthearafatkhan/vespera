@@ -10,6 +10,11 @@ from django.views.decorators.http import require_http_methods
 
 from .forms import SignupForm, LoginForm, ResetStep1Form, SetNewPasswordForm
 from .models import SecurityQuestion, UserSecurityAnswer, RecoveryCode
+import csv
+import json
+from datetime import date, timezone
+
+from django.http import HttpResponse
 
 User = get_user_model()
 signer = TimestampSigner()   # adds a timestamp + HMAC to the token
@@ -168,3 +173,149 @@ def regenerate_recovery_codes(request):
     request.session["new_recovery_codes"] = [c for c, _ in pairs]
     messages.success(request, "New codes generated — old ones are now invalid.")
     return redirect("accounts:recovery_codes")
+
+
+# accounts/views.py — append
+
+
+
+
+@login_required
+def export_home(request):
+    """Landing page for export options."""
+    return render(request, "accounts/export.html")
+
+
+@login_required
+def export_json(request):
+    """One-click download of everything the user owns, as a single JSON file."""
+    user = request.user
+
+    data = {
+        "exported_at": timezone.now().isoformat(),
+        "user": {
+            "username": user.username,
+            "full_name": user.full_name,
+            "date_joined": user.date_joined.isoformat(),
+            "last_login": user.last_login.isoformat() if user.last_login else None,
+        },
+        "courses": [],
+        "expenses": [],
+        "habits": [],
+        "habit_checkins": [],
+        "classes": [],
+        "important_dates": [],
+        "monthly_budget": None,
+    }
+
+    # ---- courses + sessions ----
+    for c in user.courses.all().prefetch_related("sessions"):
+        data["courses"].append({
+            "title": c.title,
+            "description": c.description,
+            "platform": c.platform,
+            "course_url": c.course_url,
+            "total_minutes": c.total_minutes,
+            "color": c.color,
+            "is_archived": c.is_archived,
+            "created_at": c.created_at.isoformat(),
+            "sessions": [
+                {
+                    "minutes": s.minutes,
+                    "notes": s.notes,
+                    "occurred_at": s.occurred_at.isoformat(),
+                }
+                for s in c.sessions.all()
+            ],
+        })
+
+    # ---- expenses ----
+    for e in user.expenses.all():
+        data["expenses"].append({
+            "amount": str(e.amount),
+            "category": e.category,
+            "description": e.description,
+            "occurred_at": e.occurred_at.isoformat(),
+            "created_at": e.created_at.isoformat(),
+        })
+
+    # ---- habits + check-ins ----
+    for h in user.habits.all().prefetch_related("checkins"):
+        data["habits"].append({
+            "name": h.name,
+            "emoji": h.emoji,
+            "is_archived": h.is_archived,
+            "created_at": h.created_at.isoformat(),
+        })
+        for ci in h.checkins.all():
+            data["habit_checkins"].append({
+                "habit": h.name,
+                "day": ci.day.isoformat(),
+            })
+
+    # ---- classes ----
+    for cls in user.classes.all():
+        data["classes"].append({
+            "subject": cls.subject,
+            "day": cls.get_day_display(),
+            "start_time": cls.start_time.strftime("%H:%M"),
+            "end_time": cls.end_time.strftime("%H:%M"),
+            "room": cls.room,
+            "teacher": cls.teacher,
+            "kind": cls.kind,
+        })
+
+    # ---- important dates ----
+    for d in user.important_dates.all():
+        data["important_dates"].append({
+            "title": d.title,
+            "kind": d.kind,
+            "date": d.date.isoformat(),
+            "time": d.time.strftime("%H:%M") if d.time else None,
+            "notes": d.notes,
+        })
+
+    # ---- budget ----
+    budget = getattr(user, "budget", None)
+    if budget:
+        data["monthly_budget"] = str(budget.amount)
+
+    body = json.dumps(data, indent=2, ensure_ascii=False, default=str)
+    resp = HttpResponse(body, content_type="application/json")
+    resp["Content-Disposition"] = (
+        f'attachment; filename="vespera-export-{date.today()}.json"'
+    )
+    return resp
+
+
+@login_required
+def export_csv(request):
+    """Two CSVs — expenses or sessions — for spreadsheet users."""
+    kind = request.GET.get("kind", "expenses")
+    resp = HttpResponse(content_type="text/csv")
+    resp["Content-Disposition"] = (
+        f'attachment; filename="vespera-{kind}-{date.today()}.csv"'
+    )
+    writer = csv.writer(resp)
+
+    if kind == "expenses":
+        writer.writerow(["date", "amount", "category", "description"])
+        for e in request.user.expenses.all().order_by("occurred_at"):
+            writer.writerow([
+                e.occurred_at.date().isoformat(),
+                str(e.amount),
+                e.get_category_display(),
+                e.description,
+            ])
+    elif kind == "sessions":
+        writer.writerow(["date", "course", "minutes", "notes"])
+        for c in request.user.courses.all():
+            for s in c.sessions.all().order_by("occurred_at"):
+                writer.writerow([
+                    s.occurred_at.date().isoformat(),
+                    c.title,
+                    s.minutes,
+                    s.notes,
+                ])
+
+    return resp
