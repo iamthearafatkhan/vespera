@@ -141,7 +141,9 @@ See docs/scaling.md for the 1M-user plan.
 ## Screenshots
 
 Dashboard	Course + Advisor	Savings
-https://docs/dashboard.png	https://docs/course.png	https://docs/savings.png
+![dashboard](docs/dashboard.png)
+![course](docs/course.png)
+![savings](docs/savings.png)
 ---
 ## License
 MIT
