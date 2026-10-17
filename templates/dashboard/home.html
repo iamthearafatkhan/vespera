@@ -33,7 +33,7 @@
     </div>
     <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Spend · month</p>
-      <p class="mt-1 text-2xl font-semibold">{{ stats.month_spend|floatformat:2 }}</p>
+      <p class="mt-1 text-2xl font-semibold">{{ user.currency_symbol }}{{ stats.month_spend|floatformat:2 }}</p>
     </div>
     <div class="ves-lift rounded-2xl ves-glass ves-glass-hover p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Active courses</p>
@@ -48,82 +48,83 @@
   {# ---- momentum / risk card ---- #}
   <div class="rounded-2xl ves-glass p-5">
     <div class="flex items-start justify-between gap-4">
-  <div>
-    <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Momentum</p>
-    <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
-      <span class="ves-pulse {% if risk.label == 'at risk' %}red{% elif risk.label == 'watch' %}amber{% else %}grey{% endif %}"></span>
-      {{ risk.label|capfirst }}
-    </p>
-    <p class="mt-1 text-xs text-[var(--ves-muted)]">
-      Chance you study tomorrow:
-      <strong class="text-[var(--ves-text)]">{{ risk.probability|floatformat:2 }}</strong>
-    </p>
-    {% if risk.model_auc %}
-      <p class="mt-1 text-[10px] text-[var(--ves-muted)] opacity-70">
-        Model ROC AUC: {{ risk.model_auc|floatformat:3 }} · calibrated
+
+      <div>
+        <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Momentum</p>
+        <p class="mt-1 flex items-center gap-2 text-lg font-semibold">
+          <span class="ves-pulse {% if risk.label == 'at risk' %}red{% elif risk.label == 'watch' %}amber{% else %}grey{% endif %}"></span>
+          {{ risk.label|capfirst }}
+        </p>
+        <p class="mt-1 text-xs text-[var(--ves-muted)]">
+          Chance you study tomorrow:
+          <strong class="text-[var(--ves-text)]">{{ risk.probability|floatformat:2 }}</strong>
+        </p>
+        {% if risk.model_auc %}
+          <p class="mt-1 text-[10px] text-[var(--ves-muted)] opacity-70">
+            Model ROC AUC: {{ risk.model_auc|floatformat:3 }} · calibrated
+          </p>
+        {% endif %}
+      </div>
+
+      {% if risk.top_drivers %}
+        <div class="text-right text-xs">
+          <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">
+            {% if risk.label == 'on track' %}What's going well{% else %}What's pulling it down{% endif %}
+          </p>
+          <ul class="space-y-0.5">
+            {% for name, contrib in risk.top_drivers %}
+              <li class="text-[var(--ves-muted)]">
+                {{ name }}
+                <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
+                  ({{ contrib|floatformat:2 }})
+                </span>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+
+    {% if risk.label == 'at risk' %}
+      <p class="mt-3 text-xs text-[var(--ves-muted)]">
+        Even 15 minutes today changes tomorrow's number. Small wins compound.
+      </p>
+    {% elif risk.label == 'on track' %}
+      <p class="mt-3 text-xs text-[var(--ves-muted)]">
+        Momentum's strong. Keep doing what you're doing — the forecast knows.
       </p>
     {% endif %}
   </div>
 
-  {% if risk.top_drivers %}
-    <div class="text-right text-xs">
-      <p class="text-[var(--ves-muted)] uppercase tracking-wider mb-1">
-        {% if risk.label == 'on track' %}What's going well{% else %}What's pulling it down{% endif %}
-      </p>
-      <ul class="space-y-0.5">
-        {% for name, contrib in risk.top_drivers %}
-          <li class="text-[var(--ves-muted)]">
-            {{ name }}
-            <span class="{% if contrib < 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
-              ({{ contrib|floatformat:2 }})
+  {# ---- Upcoming reminders ---- #}
+  {% if upcoming_dates %}
+    <section class="rounded-2xl ves-glass p-5">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Coming up</h2>
+        <a href="{% url 'routines:important_dates' %}" class="text-xs text-[var(--ves-accent)] hover:underline">Manage →</a>
+      </div>
+
+      <ul class="space-y-2">
+        {% for d in upcoming_dates %}
+          <li class="flex items-center gap-3 text-sm">
+            <span class="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg text-[9px] font-semibold leading-none
+              {% if d.urgency == 'critical' %}bg-red-500/15 text-red-400
+              {% elif d.urgency == 'soon' %}bg-amber-500/15 text-amber-400
+              {% else %}bg-[var(--ves-accent)]/15 text-[var(--ves-accent)]{% endif %}">
+              <span class="text-sm">{{ d.date|date:"j" }}</span>
+              <span class="uppercase">{{ d.date|date:"M" }}</span>
             </span>
+            <div class="min-w-0">
+              <p class="font-medium truncate">{{ d.title }}</p>
+              <p class="text-[11px] text-[var(--ves-muted)]">
+                {{ d.get_kind_display }} · in {{ d.days_until }} day{{ d.days_until|pluralize }}
+              </p>
+            </div>
           </li>
         {% endfor %}
       </ul>
-    </div>
+    </section>
   {% endif %}
-</div>
-
-    
-    {% if risk.label == 'at risk' %}
-  <p class="mt-3 text-xs text-[var(--ves-muted)]">
-    Even 15 minutes today changes tomorrow's number. Small wins compound.
-  </p>
-{% elif risk.label == 'on track' %}
-  <p class="mt-3 text-xs text-[var(--ves-muted)]">
-    Momentum's strong. Keep doing what you're doing — the forecast knows.
-  </p>
-{% endif %}
-  </div>
-  {# ---- Upcoming reminders ---- #}
-{% if upcoming_dates %}
-  <section class="rounded-2xl ves-glass p-5">
-    <div class="mb-3 flex items-center justify-between">
-      <h2 class="text-sm font-semibold uppercase tracking-wider text-[var(--ves-muted)]">Coming up</h2>
-      <a href="{% url 'routines:important_dates' %}" class="text-xs text-[var(--ves-accent)] hover:underline">Manage →</a>
-    </div>
-
-    <ul class="space-y-2">
-      {% for d in upcoming_dates %}
-        <li class="flex items-center gap-3 text-sm">
-          <span class="flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-lg text-[9px] font-semibold leading-none
-            {% if d.urgency == 'critical' %}bg-red-500/15 text-red-400
-            {% elif d.urgency == 'soon' %}bg-amber-500/15 text-amber-400
-            {% else %}bg-[var(--ves-accent)]/15 text-[var(--ves-accent)]{% endif %}">
-            <span class="text-sm">{{ d.date|date:"j" }}</span>
-            <span class="uppercase">{{ d.date|date:"M" }}</span>
-          </span>
-          <div class="min-w-0">
-            <p class="font-medium truncate">{{ d.title }}</p>
-            <p class="text-[11px] text-[var(--ves-muted)]">
-              {{ d.get_kind_display }} · in {{ d.days_until }} day{{ d.days_until|pluralize }}
-            </p>
-          </div>
-        </li>
-      {% endfor %}
-    </ul>
-  </section>
-{% endif %}
 
   {# ---- Cross-domain insights ---- #}
   {% if insights %}
@@ -250,6 +251,7 @@
   const accent  = css.getPropertyValue("--ves-accent").trim()  || "#58a4b0";
   const accent2 = css.getPropertyValue("--ves-accent-2").trim()|| "#a9bcd0";
   const muted   = css.getPropertyValue("--ves-muted").trim()   || "#888";
+  const SYMBOL  = "{{ user.currency_symbol }}";
 
   Chart.defaults.font.family = "ui-sans-serif, system-ui, sans-serif";
   Chart.defaults.color = muted;
@@ -265,6 +267,7 @@
     },
   };
 
+  // --- study (line, filled) ---
   const studyCtx = document.getElementById("studyChart").getContext("2d");
   const grad = studyCtx.createLinearGradient(0, 0, 0, 200);
   grad.addColorStop(0, hexA(accent, .45));
@@ -289,6 +292,7 @@
     options: baseOptions,
   });
 
+  // --- spend (bar) ---
   new Chart(document.getElementById("spendChart"), {
     type: "bar",
     data: {
@@ -302,13 +306,29 @@
     },
     options: {
       ...baseOptions,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return SYMBOL + ctx.parsed.y;
+            }
+          }
+        }
+      },
       scales: {
         ...baseOptions.scales,
         x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+        y: {
+          grid: { color: gridColor },
+          border: { display: false },
+          ticks: { callback: (v) => SYMBOL + v },
+        },
       },
     },
   });
 
+  // --- habits (bar, % complete) ---
   new Chart(document.getElementById("habitChart"), {
     type: "bar",
     data: {

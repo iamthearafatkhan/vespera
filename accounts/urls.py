@@ -16,4 +16,5 @@ urlpatterns = [
     path("export/", views.export_home, name="export"),
     path("export/json/", views.export_json, name="export_json"),
     path("export/csv/", views.export_csv, name="export_csv"),
+    path("currency/", views.update_currency, name="update_currency"),
 ]

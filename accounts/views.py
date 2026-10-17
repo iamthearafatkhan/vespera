@@ -15,7 +15,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
 from .forms import SignupForm, LoginForm, ResetStep1Form, SetNewPasswordForm
-from .models import SecurityQuestion, UserSecurityAnswer, RecoveryCode
+from .models import CURRENCY_CHOICES, SecurityQuestion, UserSecurityAnswer, RecoveryCode
 
 User = get_user_model()
 signer = TimestampSigner()
@@ -34,6 +34,7 @@ def signup(request):
                 username=form.cleaned_data["username"],
                 password=form.cleaned_data["password"],
                 full_name=form.cleaned_data["full_name"],
+                currency=form.cleaned_data["currency"],
             )
             UserSecurityAnswer.objects.create(
                 user=user,
@@ -298,3 +299,28 @@ def export_csv(request):
                 ])
 
     return resp
+
+
+
+
+# replace profile():
+@login_required
+def profile(request):
+    return render(request, "accounts/profile.html", {
+        "currencies": CURRENCY_CHOICES,
+    })
+
+# add this view:
+@login_required
+@require_http_methods(["POST"])
+def update_currency(request):
+    currency = request.POST.get("currency", "USD")
+    valid = {c[0] for c in CURRENCY_CHOICES}
+    if currency not in valid:
+        messages.error(request, "Invalid currency.")
+        return redirect("accounts:profile")
+
+    request.user.currency = currency
+    request.user.save(update_fields=["currency"])
+    messages.success(request, f"Currency updated to {currency}.")
+    return redirect("accounts:profile")

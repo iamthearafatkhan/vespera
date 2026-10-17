@@ -3,6 +3,9 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 
+
+from .models import CURRENCY_CHOICES
+
 User = get_user_model()
 
 
@@ -12,6 +15,7 @@ class SignupForm(forms.Form):
     username = forms.CharField(max_length=30, min_length=3)
     password = forms.CharField(widget=forms.PasswordInput, min_length=10)
     password2 = forms.CharField(widget=forms.PasswordInput, label="Confirm password")
+    currency = forms.ChoiceField(choices=CURRENCY_CHOICES, initial="USD", label="Currency")
 
     # user's chosen security question
     question = forms.ModelChoiceField(queryset=None)

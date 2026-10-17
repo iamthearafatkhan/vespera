@@ -1,57 +1,86 @@
 {% extends "base.html" %}
-{% block title %}Profile · PulseTrack{% endblock %}
+{% block title %}Profile · Vespera{% endblock %}
 
 {% block content %}
-<div class="mx-auto max-w-3xl">
-  <h1 class="mb-1 text-3xl font-semibold tracking-tight">Profile</h1>
-  <p class="mb-8 text-sm text-neutral-500 dark:text-neutral-400">
-    Signed in as <span class="font-medium">{{ user.username }}</span>
-  </p>
+<div class="mx-auto max-w-3xl space-y-6">
 
-  <section class="rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-    <h2 class="mb-3 text-lg font-semibold">Account details</h2>
-    <dl class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+  <div>
+    <h1 class="text-3xl font-semibold tracking-tight">Profile</h1>
+    <p class="mt-1 text-sm text-[var(--ves-muted)]">
+      Signed in as <span class="font-medium text-[var(--ves-text)]">{{ user.username }}</span>
+    </p>
+  </div>
+
+  {# ---- account details ---- #}
+  <section class="rounded-2xl ves-glass p-6">
+    <h2 class="mb-4 text-lg font-semibold">Account details</h2>
+    <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
       <div>
-        <dt class="text-neutral-500">Full name</dt>
-        <dd class="font-medium">{{ user.full_name }}</dd>
+        <dt class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Full name</dt>
+        <dd class="mt-0.5 font-medium">{{ user.full_name }}</dd>
       </div>
       <div>
-        <dt class="text-neutral-500">Username</dt>
-        <dd class="font-medium">{{ user.username }}</dd>
+        <dt class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Username</dt>
+        <dd class="mt-0.5 font-medium">{{ user.username }}</dd>
       </div>
       <div>
-        <dt class="text-neutral-500">Joined</dt>
-        <dd class="font-medium">{{ user.date_joined|date:"M j, Y" }}</dd>
+        <dt class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Joined</dt>
+        <dd class="mt-0.5 font-medium">{{ user.date_joined|date:"M j, Y" }}</dd>
       </div>
       <div>
-        <dt class="text-neutral-500">Last login</dt>
-        <dd class="font-medium">{{ user.last_login|date:"M j, Y H:i" }}</dd>
+        <dt class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Last login</dt>
+        <dd class="mt-0.5 font-medium">{{ user.last_login|date:"M j, Y H:i" }}</dd>
       </div>
     </dl>
   </section>
 
-  {# recovery codes are tucked away here on purpose — users find them when needed #}
-  <section class="mt-6 rounded-xl border border-neutral-200 p-6 dark:border-neutral-800">
-    <h2 class="mb-1 text-lg font-semibold">Recovery codes</h2>
-    <p class="mb-4 text-sm text-neutral-500 dark:text-neutral-400">
-      You have <strong>{{ user.recovery_codes.count }}</strong> codes.
+  {# ---- currency ---- #}
+  <section class="rounded-2xl ves-glass p-6">
+    <h2 class="mb-2 text-lg font-semibold">Currency</h2>
+    <p class="mb-4 text-sm text-[var(--ves-muted)]">
+      Every amount in Vespera uses this currency. Currently:
+      <strong class="text-[var(--ves-text)]">{{ user.currency_symbol }} {{ user.currency }}</strong>
+    </p>
+
+    <form method="post" action="{% url 'accounts:update_currency' %}" class="flex flex-wrap items-center gap-3">
+      {% csrf_token %}
+      <select name="currency"
+              class="rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)] dark:bg-white/5">
+        {% for code, label in currencies %}
+          <option value="{{ code }}" {% if user.currency == code %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <button type="submit"
+              class="rounded-xl bg-gradient-to-br from-[var(--ves-accent)] to-[var(--ves-accent-2)] px-4 py-2 text-sm font-medium text-white shadow-lg shadow-[color:var(--ves-accent)]/20">
+        Update currency
+      </button>
+    </form>
+  </section>
+
+  {# ---- recovery codes ---- #}
+  <section class="rounded-2xl ves-glass p-6">
+    <h2 class="mb-2 text-lg font-semibold">Recovery codes</h2>
+    <p class="mb-4 text-sm text-[var(--ves-muted)]">
+      You have <strong class="text-[var(--ves-text)]">{{ user.recovery_codes.count }}</strong> codes.
       Keep them somewhere safe — each works only once.
     </p>
     <a href="{% url 'accounts:recovery_codes' %}"
-       class="inline-block rounded-lg border border-neutral-300 px-4 py-2 text-sm
-              hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">
+       class="inline-block rounded-xl border border-[var(--ves-border)] px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
       View &amp; manage codes
     </a>
   </section>
-  <section class="mt-6 rounded-2xl border border-neutral-200 p-6 dark:border-neutral-800">
-    <h2 class="mb-1 text-lg font-semibold">Export your data</h2>
+
+  {# ---- export ---- #}
+  <section class="rounded-2xl ves-glass p-6">
+    <h2 class="mb-2 text-lg font-semibold">Export your data</h2>
     <p class="mb-4 text-sm text-[var(--ves-muted)]">
       Download everything in JSON or CSV. No lock-in.
     </p>
     <a href="{% url 'accounts:export' %}"
-      class="inline-block rounded-lg border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800">
-        Export →
+       class="inline-block rounded-xl border border-[var(--ves-border)] px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
+      Export →
     </a>
   </section>
+
 </div>
 {% endblock %}

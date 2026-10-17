@@ -31,13 +31,15 @@
           {% if savings_source == 'budget' %}Saved against budget{% else %}Saved vs previous {{ mode }}{% endif %}
         </p>
         <p class="mt-1 text-4xl font-semibold tracking-tight {% if savings >= 0 %}text-emerald-400{% else %}text-red-400{% endif %}">
-          {% if savings >= 0 %}+{% endif %}{{ savings|floatformat:2 }}
+          {% if savings >= 0 %}+{% endif %}{{ user.currency_symbol }}{{ savings|floatformat:2 }}
         </p>
         <p class="mt-1 text-xs text-[var(--ves-muted)]">
           {% if savings_source == 'budget' %}
-            Budget: {{ budget_for_period|floatformat:2 }} · spent: {{ this_total|floatformat:2 }}
+            Budget: {{ user.currency_symbol }}{{ budget_for_period|floatformat:2 }} ·
+            spent: {{ user.currency_symbol }}{{ this_total|floatformat:2 }}
           {% else %}
-            This {{ mode }}: {{ this_total|floatformat:2 }} · previous: {{ last_total|floatformat:2 }}
+            This {{ mode }}: {{ user.currency_symbol }}{{ this_total|floatformat:2 }} ·
+            previous: {{ user.currency_symbol }}{{ last_total|floatformat:2 }}
           {% endif %}
         </p>
       </div>
@@ -61,16 +63,16 @@
   <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">This {{ mode }}</p>
-      <p class="mt-1 text-2xl font-semibold">{{ this_total|floatformat:2 }}</p>
+      <p class="mt-1 text-2xl font-semibold">{{ user.currency_symbol }}{{ this_total|floatformat:2 }}</p>
     </div>
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Previous</p>
-      <p class="mt-1 text-2xl font-semibold">{{ last_total|floatformat:2 }}</p>
+      <p class="mt-1 text-2xl font-semibold">{{ user.currency_symbol }}{{ last_total|floatformat:2 }}</p>
     </div>
     <div class="ves-lift rounded-2xl ves-glass p-4">
       <p class="text-xs uppercase tracking-wider text-[var(--ves-muted)]">Change</p>
       <p class="mt-1 text-2xl font-semibold {% if delta > 0 %}text-red-400{% else %}text-emerald-400{% endif %}">
-        {% if delta > 0 %}+{% endif %}{{ delta|floatformat:2 }}
+        {% if delta > 0 %}+{% endif %}{{ user.currency_symbol }}{{ delta|floatformat:2 }}
       </p>
       {% if delta_pct is not None %}
         <p class="mt-0.5 text-[11px] text-[var(--ves-muted)]">
@@ -138,7 +140,7 @@
       </button>
       {% if budget and budget.amount > 0 %}
         <span class="text-xs text-[var(--ves-muted)]">
-          Current: {{ budget.amount|floatformat:2 }} / month
+          Current: {{ user.currency_symbol }}{{ budget.amount|floatformat:2 }} / month
         </span>
       {% endif %}
     </form>
@@ -162,6 +164,7 @@
   const accent  = css.getPropertyValue("--ves-accent").trim()  || "#58a4b0";
   const accent2 = css.getPropertyValue("--ves-accent-2").trim()|| "#a9bcd0";
   const gridColor = "rgba(128,128,128,.15)";
+  const SYMBOL = "{{ user.currency_symbol }}";
 
   const histLabels = read("hist-labels");
   const histValues = read("hist-values");
@@ -176,7 +179,6 @@
     label: "Spend",
   }];
 
-  // optional budget dashed line
   const budgetEl = document.getElementById("chart-budget");
   if (budgetEl) {
     const budget = JSON.parse(budgetEl.textContent);
@@ -199,11 +201,26 @@
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: { display: !!budgetEl, labels: { color: css.getPropertyValue("--ves-muted").trim() } },
+        legend: {
+          display: !!budgetEl,
+          labels: { color: css.getPropertyValue("--ves-muted").trim() },
+        },
+        tooltip: {
+          callbacks: {
+            label: function (ctx) {
+              return ctx.dataset.label + ": " + SYMBOL + ctx.parsed.y;
+            },
+          },
+        },
       },
       scales: {
         x: { grid: { display: false } },
-        y: { grid: { color: gridColor }, border: { display: false }, beginAtZero: true },
+        y: {
+          grid: { color: gridColor },
+          border: { display: false },
+          beginAtZero: true,
+          ticks: { callback: (v) => SYMBOL + v },
+        },
       },
     },
   });
@@ -233,6 +250,13 @@
           legend: {
             position: "right",
             labels: { color: css.getPropertyValue("--ves-muted").trim(), boxWidth: 12, padding: 10 },
+          },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return ctx.label + ": " + SYMBOL + ctx.parsed;
+              },
+            },
           },
         },
       },

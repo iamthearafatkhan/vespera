@@ -37,7 +37,7 @@
         {% csrf_token %}
 
         <div>
-          <label class="mb-1 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">Amount</label>
+          <label class="mb-1 block text-xs uppercase tracking-wider text-[var(--ves-muted)]">Amount ({{ user.currency_symbol }})</label>
           <input type="number" name="amount" step="0.01" min="0" required
                  class="w-full rounded-xl border border-[var(--ves-border)] bg-black/5 px-3 py-2 text-sm outline-none focus:border-[var(--ves-accent)] dark:bg-white/5" />
         </div>
