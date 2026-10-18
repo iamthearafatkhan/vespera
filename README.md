@@ -124,7 +124,7 @@ Dashboard	Course + Advisor	Savings
 ![course](docs/course.png)
 ![savings](docs/savings.png)
 ---
-📄 License
+## 📄 License
 This project is licensed under the MIT License.
 
 ---
